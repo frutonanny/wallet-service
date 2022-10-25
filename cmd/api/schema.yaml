@@ -1,0 +1,70 @@
+openapi: 3.0.3
+info:
+  title: Service Wallet API
+  version: v1
+
+servers:
+  - url: http://localhost:8081/v1
+    description: Development server
+
+paths:
+  /credit_amount:
+    post:
+      description: "Пополнить баланс пользователя userID на сумму amount."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreditRequest"
+      responses:
+        '200':
+          description: "Баланс пополнен."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditResponse"
+
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - message
+        - code
+      properties:
+        message:
+          type: string
+          minLength: 1
+        code:
+          type: string
+          minLength: 1
+
+    CreditRequest:
+      required:
+        - userID
+        - amount
+      properties:
+        userID:
+          type: integer
+          format: int64
+          description: "Идентификатор пользователя."
+        amount:
+          type: integer
+          format: int64
+          description: "Сумма средств в копейках."
+    CreditResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/CreditData"
+        error:
+          $ref: "#/components/schemas/Error"
+    CreditData:
+      required:
+        - balance
+      properties:
+        balance:
+          type: integer
+          format: int64
+          description: "Сумма средств в копейках, после пополнения."
+  
