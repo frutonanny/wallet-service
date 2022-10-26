@@ -8,22 +8,143 @@ servers:
     description: Development server
 
 paths:
-  /credit_amount:
+  /add:
     post:
-      description: "Пополнить баланс пользователя userID на сумму amount."
+      description: "Пополнить баланс пользователя userID на сумму cash."
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreditRequest"
+              $ref: "#/components/schemas/AddRequest"
       responses:
         '200':
           description: "Баланс пополнен."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreditResponse"
+                $ref: "#/components/schemas/AddResponse"
+
+  /reserve:
+    post:
+      description: "Зарезервировать сумму средств price у пользователя userID для оплаты номера заказа orderID."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReserveRequest"
+      responses:
+        '200':
+          description: "Сумма зарезервирована."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReserveResponse"
+
+  /write-off:
+    post:
+      description: "Списать сумму средств price у пользователя userID для оплаты номера заказа orderID."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WriteOffRequest"
+      responses:
+        '200':
+          description: "Сумма списана."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteOffResponse"
+
+  /cancel:
+    post:
+      description: "Разрезервировать сумму средств у пользователя userID и отменить заказ с номером orderID." # ?
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelRequest"
+      responses:
+        '200':
+          description: "Сумма разрезервирована."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelResponse"
+
+  /get_balance:
+    post:
+      description: "Показать баланс пользователя userID."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetBalanceRequest"
+      responses:
+        '200':
+          description: "Баланс показан."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetBalanceResponse"
+
+  /get_transactions:
+    post:
+      description: "Показать список транзакций пользователя userID, отсортированный  по переданному параметру."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetTransactionsRequest"
+      responses:
+        '200':
+          description: "Список транзакций."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetTransactionsResponse"
+
+  /get_transactions_by_time:
+    post:
+      description: "Показать список транзакций пользователя userID по временному промежутку, отсортированный  по 
+      переданному параметру."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetTransactionsByTimeRequest"
+      responses:
+        '200':
+          description: "Список транзакций."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetTransactionsByTimeResponse"
+
+  /get_report:
+    post:
+      description: "Получить ссылку на CSV файл, в котором лежит месячный отчет по всем пользователям."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetReportRequest"
+      responses:
+        '200':
+          description: "Ссылка на CSV файл."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetReportResponse"
+
 
 components:
   schemas:
@@ -40,31 +161,276 @@ components:
           type: string
           minLength: 1
 
-    CreditRequest:
+    AddRequest:
       required:
         - userID
-        - amount
+        - cash
       properties:
         userID:
           type: integer
           format: int64
           description: "Идентификатор пользователя."
-        amount:
+        cash:
           type: integer
           format: int64
-          description: "Сумма средств в копейках."
-    CreditResponse:
+          description: "Сумма в копейках."
+
+    AddResponse:
       properties:
         data:
-          $ref: "#/components/schemas/CreditData"
+          $ref: "#/components/schemas/AddData"
         error:
           $ref: "#/components/schemas/Error"
-    CreditData:
+
+    AddData:
       required:
         - balance
       properties:
         balance:
           type: integer
           format: int64
-          description: "Сумма средств в копейках, после пополнения."
-  
+          description: "Текущий баланс пользователя в копейках с учетом пополнения."
+
+    ReserveRequest:
+      required:
+        - userID
+        - serviceID
+        - orderID
+        - price
+      properties:
+        userID:
+          type: integer
+          format: int64
+          description: "Идентификатор пользователя."
+        serviceID:
+          type: integer
+          format: int64
+          description: "Идентификатор услуги."
+        orderID:
+          type: integer
+          format: int64
+          description: "Идентификатор заказа"
+        price:
+          type: integer
+          format: int64
+          description: "Стоимость заказа в копейках."
+
+    ReserveResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/ReserveData"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    ReserveData:
+      required:
+        - balance
+      properties:
+        balance:
+          type: integer
+          format: int64
+          description: "Текущий баланс пользователя в копейках с учетом резервирования средств."
+
+    WriteOffRequest:
+      required:
+        - userID
+        - serviceID
+        - orderID
+        - price
+      properties:
+        userID:
+          type: integer
+          format: int64
+          description: "Идентификатор пользователя."
+        serviceID:
+          type: integer
+          format: int64
+          description: "Идентификатор услуги."
+        orderID:
+          type: integer
+          format: int64
+          description: "Идентификатор заказа"
+        price:
+          type: integer
+          format: int64
+          description: "Стоимость заказа в копейках."
+
+    WriteOffResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/WriteOffData"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    WriteOffData:
+      required:
+        - balance
+      properties:
+        balance:
+          type: integer
+          format: int64
+          description: "Текущий баланс пользователя в копейках с учетом списания средств."
+
+    CancelRequest:
+      required:
+        - userID
+        - orderID
+      properties:
+        userID:
+          type: integer
+          format: int64
+          description: "Идентификатор пользователя."
+        orderID:
+          type: integer
+          format: int64
+          description: "Идентификатор заказа"
+
+    CancelResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/CancelData"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    CancelData:
+      required:
+        - balance
+      properties:
+        balance:
+          type: integer
+          format: int64
+          description: "Текущий баланс пользователя в копейках с учетом разрезервирования средств."
+
+    GetBalanceRequest:
+      required:
+        - userID
+      properties:
+        userID:
+          type: integer
+          format: int64
+          description: "Идентификатор пользователя."
+
+    GetBalanceResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/GetBalanceData"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    GetBalanceData:
+      required:
+        - balance
+      properties:
+        balance:
+          type: integer
+          format: int64
+          description: "Текущий баланс пользователя в копейках."
+
+    GetTransactionsRequest:
+      required:
+        - userID
+        - limit
+        - offset
+        - sortBy
+        - direction
+      properties:
+        userID:
+          type: integer
+          format: int64
+          description: "Идентификатор пользователя."
+        limit:
+          type: integer
+          format: int64
+          description: "Количество записей."
+        offset:
+          type: integer
+          format: int64
+          description: "Смещение по отсортированным записям."
+        sortBy:
+          type: string
+          minLength: 1
+          description: "Поле, по которому происходит сортировка (дате/сумме)."
+        direction:
+          type: string
+          minLength: 1
+          description: "Направление поиска (по возрастанию/убыванию)."
+
+    GetTransactionsResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/GetTransactionsData"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    GetTransactionsData:
+      required:
+        - transactions
+      properties:
+        balance:
+          type: array # ?
+          description: "Отсортированный список транзакций пользователя userID."
+
+    GetTransactionsByTimeRequest:
+      required:
+        - userID
+        - timeStart
+        - timeEnd
+        - direction
+      properties:
+        userID:
+          type: integer
+          format: int64
+          description: "Идентификатор пользователя."
+        timeStart:
+          type: string
+          minLength: 1
+          description: "Временная точка в формате time.RFC3339, от которой начинается поиск транзакций."
+        timeEnd:
+          type: string
+          minLength: 1
+          description: "Временная точка в формате time.RFC3339, до которой происходит поиск транзакций."
+        direction:
+          type: string
+          minLength: 1
+          description: "Направление поиска (по возрастанию/убыванию)."
+
+    GetTransactionsByTimeResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/GetTransactionsByTimeData"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    GetTransactionsByTimeData:
+      required:
+        - transactions
+      properties:
+        balance:
+          type: array # ?
+          format: object #?
+          description: "Отсортированный список транзакций пользователя userID."
+
+    GetReportRequest:
+      required:
+        - date
+      properties:
+        date:
+          type: string
+          minLength: 1
+          description: "Время в формате 'гггг-мм'."
+
+    GetReportResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/GetReportData"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    GetReportData:
+      required:
+        - reference
+      properties:
+        reference:
+          type: string
+          minLength: 1
+          description: "Ссылка на CSV файл."
