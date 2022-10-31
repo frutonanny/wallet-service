@@ -13,15 +13,13 @@ create table transactions
 (
     id         serial primary key,
     wallet_id  integer     not null references wallets (id),
-    -- Возможные значения: reservation / write_off / cancel / incoming_transfer / outgoing_transfer
+    -- Возможные значения: reservation / write_off / cancel / incoming_transfer
     "type"     text        not null,
     -- Для reservation: { "order_id": <order_id> }
     -- Для write_off: { "order_id": <order_id> }
     -- Для cancel: { "order_id": <order_id> }
     -- Для incoming_transfer:
     --  - { "type": "enrollment" }
-    --  - { "type": "transfer", "from": <user_id>, "comment": <комментарий> }
-    -- Для outgoing_transfer: { "to": <user_id>, "comment": <комментарий> }.
     payload    jsonb,
     amount     bigint check ( amount > 0 ),
     created_at timestamptz not null default now()
@@ -60,14 +58,15 @@ create index wallets_user_idx on wallets (user_id);
 create index transactions_created_idx on transactions (created_at desc);
 create index report_period_idx on report (period desc);
 
+-- +goose StatementBegin
 create function trigger_set_timestamp()
     returns trigger as $$
 begin
-  new.updated_at=now();
-return new;
+    new.updated_at=now();
+    return new;
 end;
-$$
-language plpgsql;
+$$ language 'plpgsql';
+-- +goose StatementEnd
 
 create trigger wallets_set_timestamp
     before update

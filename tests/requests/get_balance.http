@@ -1,0 +1,6 @@
+POST localhost:8081/v1/getBalance
+Content-Type: application/json
+
+{
+  "userID": 1
+}

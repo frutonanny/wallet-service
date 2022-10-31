@@ -1,0 +1,7 @@
+POST localhost:8081/v1/add
+Content-Type: application/json
+
+{
+  "userID": 1,
+  "cash": 1000
+}

@@ -27,7 +27,7 @@ paths:
 
   /reserve:
     post:
-      description: "Зарезервировать сумму средств price у пользователя userID для оплаты номера заказа orderID."
+      description: "Зарезервировать сумму средств price у пользователя userID для оплаты заказа orderID."
       requestBody:
         required: true
         content:
@@ -42,9 +42,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReserveResponse"
 
-  /write-off:
+  /writeOff:
     post:
-      description: "Списать сумму средств price у пользователя userID для оплаты номера заказа orderID."
+      description: "Списать сумму средств price у пользователя userID для оплаты заказа orderID."
       requestBody:
         required: true
         content:
@@ -61,7 +61,7 @@ paths:
 
   /cancel:
     post:
-      description: "Разрезервировать сумму средств у пользователя userID и отменить заказ с номером orderID." # ?
+      description: "Разрезервировать сумму средств price у пользователя userID по заказу orderID."
       requestBody:
         required: true
         content:
@@ -76,7 +76,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CancelResponse"
 
-  /get_balance:
+  /getBalance:
     post:
       description: "Показать баланс пользователя userID."
       requestBody:
@@ -93,7 +93,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/GetBalanceResponse"
 
-  /get_transactions:
+  /getTransactions:
     post:
       description: "Показать список транзакций пользователя userID, отсортированный  по переданному параметру."
       requestBody:
@@ -110,7 +110,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/GetTransactionsResponse"
 
-  /get_transactions_by_time:
+  /getTransactionsByTime:
     post:
       description: "Показать список транзакций пользователя userID по временному промежутку, отсортированный  по 
       переданному параметру."
@@ -128,9 +128,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/GetTransactionsByTimeResponse"
 
-  /get_report:
+  /getReport:
     post:
-      description: "Получить ссылку на CSV файл, в котором лежит месячный отчет по всем пользователям."
+      description: "Получить ссылку на CSV файл, в котором лежит месячный отчет по всем услугам."
       requestBody:
         required: true
         content:
@@ -242,6 +242,7 @@ components:
           type: integer
           format: int64
           description: "Идентификатор пользователя."
+          example: TODO
         serviceID:
           type: integer
           format: int64
@@ -341,6 +342,7 @@ components:
         limit:
           type: integer
           format: int64
+          maximum: 100
           description: "Количество записей."
         offset:
           type: integer
@@ -348,12 +350,14 @@ components:
           description: "Смещение по отсортированным записям."
         sortBy:
           type: string
-          minLength: 1
+          enum: [ "date", "amount" ]
           description: "Поле, по которому происходит сортировка (дате/сумме)."
+          example: "date"
         direction:
           type: string
-          minLength: 1
+          enum: [ "asc", "desc" ]
           description: "Направление поиска (по возрастанию/убыванию)."
+          example: "asc"
 
     GetTransactionsResponse:
       properties:
@@ -366,33 +370,53 @@ components:
       required:
         - transactions
       properties:
-        balance:
-          type: array # ?
+        transactions:
           description: "Отсортированный список транзакций пользователя userID."
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+
+    Transaction:
+      required:
+        - description
+        - amount
+        - createdAt
+      properties:
+        "description":
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: todo
+          example: todo
+        amount:
+          type: integer
+          format: int64
+          description: todo
+          example: todo
+        createdAt:
+          type: string
+          format: date-time
+          description: todo
+          example: todo
 
     GetTransactionsByTimeRequest:
       required:
         - userID
-        - timeStart
-        - timeEnd
-        - direction
+        - start
+        - end
       properties:
         userID:
           type: integer
           format: int64
           description: "Идентификатор пользователя."
-        timeStart:
+        start:
           type: string
-          minLength: 1
+          format: date-time
           description: "Временная точка в формате time.RFC3339, от которой начинается поиск транзакций."
-        timeEnd:
+        end:
           type: string
-          minLength: 1
+          format: date-time
           description: "Временная точка в формате time.RFC3339, до которой происходит поиск транзакций."
-        direction:
-          type: string
-          minLength: 1
-          description: "Направление поиска (по возрастанию/убыванию)."
 
     GetTransactionsByTimeResponse:
       properties:
@@ -405,10 +429,11 @@ components:
       required:
         - transactions
       properties:
-        balance:
-          type: array # ?
-          format: object #?
-          description: "Отсортированный список транзакций пользователя userID."
+        transactions:
+          description: "Список транзакций пользователя userID."
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
 
     GetReportRequest:
       required:
@@ -417,7 +442,9 @@ components:
         date:
           type: string
           minLength: 1
-          description: "Время в формате 'гггг-мм'."
+          maxLength: 7
+          description: "Время в формате 'yyyy-mm'."
+          example: "2022-10"
 
     GetReportResponse:
       properties:
