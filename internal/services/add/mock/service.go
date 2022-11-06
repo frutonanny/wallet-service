@@ -60,31 +60,31 @@ func (mr *MockloggerMockRecorder) Info(msg interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Info", reflect.TypeOf((*Mocklogger)(nil).Info), msg)
 }
 
-// MockRepository is a mock of Repository interface.
-type MockRepository struct {
+// MockWalletRepository is a mock of WalletRepository interface.
+type MockWalletRepository struct {
 	ctrl     *gomock.Controller
-	recorder *MockRepositoryMockRecorder
+	recorder *MockWalletRepositoryMockRecorder
 }
 
-// MockRepositoryMockRecorder is the mock recorder for MockRepository.
-type MockRepositoryMockRecorder struct {
-	mock *MockRepository
+// MockWalletRepositoryMockRecorder is the mock recorder for MockWalletRepository.
+type MockWalletRepositoryMockRecorder struct {
+	mock *MockWalletRepository
 }
 
-// NewMockRepository creates a new mock instance.
-func NewMockRepository(ctrl *gomock.Controller) *MockRepository {
-	mock := &MockRepository{ctrl: ctrl}
-	mock.recorder = &MockRepositoryMockRecorder{mock}
+// NewMockWalletRepository creates a new mock instance.
+func NewMockWalletRepository(ctrl *gomock.Controller) *MockWalletRepository {
+	mock := &MockWalletRepository{ctrl: ctrl}
+	mock.recorder = &MockWalletRepositoryMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
+func (m *MockWalletRepository) EXPECT() *MockWalletRepositoryMockRecorder {
 	return m.recorder
 }
 
 // Add mocks base method.
-func (m *MockRepository) Add(ctx context.Context, walletID, cash int64) (int64, error) {
+func (m *MockWalletRepository) Add(ctx context.Context, walletID, cash int64) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Add", ctx, walletID, cash)
 	ret0, _ := ret[0].(int64)
@@ -93,13 +93,51 @@ func (m *MockRepository) Add(ctx context.Context, walletID, cash int64) (int64, 
 }
 
 // Add indicates an expected call of Add.
-func (mr *MockRepositoryMockRecorder) Add(ctx, walletID, cash interface{}) *gomock.Call {
+func (mr *MockWalletRepositoryMockRecorder) Add(ctx, walletID, cash interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockRepository)(nil).Add), ctx, walletID, cash)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockWalletRepository)(nil).Add), ctx, walletID, cash)
+}
+
+// CreateIfNotExist mocks base method.
+func (m *MockWalletRepository) CreateIfNotExist(ctx context.Context, userID int64) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateIfNotExist", ctx, userID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateIfNotExist indicates an expected call of CreateIfNotExist.
+func (mr *MockWalletRepositoryMockRecorder) CreateIfNotExist(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateIfNotExist", reflect.TypeOf((*MockWalletRepository)(nil).CreateIfNotExist), ctx, userID)
+}
+
+// MockTransactionRepository is a mock of TransactionRepository interface.
+type MockTransactionRepository struct {
+	ctrl     *gomock.Controller
+	recorder *MockTransactionRepositoryMockRecorder
+}
+
+// MockTransactionRepositoryMockRecorder is the mock recorder for MockTransactionRepository.
+type MockTransactionRepositoryMockRecorder struct {
+	mock *MockTransactionRepository
+}
+
+// NewMockTransactionRepository creates a new mock instance.
+func NewMockTransactionRepository(ctrl *gomock.Controller) *MockTransactionRepository {
+	mock := &MockTransactionRepository{ctrl: ctrl}
+	mock.recorder = &MockTransactionRepositoryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTransactionRepository) EXPECT() *MockTransactionRepositoryMockRecorder {
+	return m.recorder
 }
 
 // AddTransaction mocks base method.
-func (m *MockRepository) AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error {
+func (m *MockTransactionRepository) AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddTransaction", ctx, walletID, action, payload, amount)
 	ret0, _ := ret[0].(error)
@@ -107,74 +145,58 @@ func (m *MockRepository) AddTransaction(ctx context.Context, walletID int64, act
 }
 
 // AddTransaction indicates an expected call of AddTransaction.
-func (mr *MockRepositoryMockRecorder) AddTransaction(ctx, walletID, action, payload, amount interface{}) *gomock.Call {
+func (mr *MockTransactionRepositoryMockRecorder) AddTransaction(ctx, walletID, action, payload, amount interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTransaction", reflect.TypeOf((*MockRepository)(nil).AddTransaction), ctx, walletID, action, payload, amount)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTransaction", reflect.TypeOf((*MockTransactionRepository)(nil).AddTransaction), ctx, walletID, action, payload, amount)
 }
 
-// CreateWallet mocks base method.
-func (m *MockRepository) CreateWallet(ctx context.Context, userID int64) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWallet", ctx, userID)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateWallet indicates an expected call of CreateWallet.
-func (mr *MockRepositoryMockRecorder) CreateWallet(ctx, userID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWallet", reflect.TypeOf((*MockRepository)(nil).CreateWallet), ctx, userID)
-}
-
-// ExistWallet mocks base method.
-func (m *MockRepository) ExistWallet(ctx context.Context, userID int64) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExistWallet", ctx, userID)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ExistWallet indicates an expected call of ExistWallet.
-func (mr *MockRepositoryMockRecorder) ExistWallet(ctx, userID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistWallet", reflect.TypeOf((*MockRepository)(nil).ExistWallet), ctx, userID)
-}
-
-// MockRepoBuilder is a mock of RepoBuilder interface.
-type MockRepoBuilder struct {
+// Mockdependencies is a mock of dependencies interface.
+type Mockdependencies struct {
 	ctrl     *gomock.Controller
-	recorder *MockRepoBuilderMockRecorder
+	recorder *MockdependenciesMockRecorder
 }
 
-// MockRepoBuilderMockRecorder is the mock recorder for MockRepoBuilder.
-type MockRepoBuilderMockRecorder struct {
-	mock *MockRepoBuilder
+// MockdependenciesMockRecorder is the mock recorder for Mockdependencies.
+type MockdependenciesMockRecorder struct {
+	mock *Mockdependencies
 }
 
-// NewMockRepoBuilder creates a new mock instance.
-func NewMockRepoBuilder(ctrl *gomock.Controller) *MockRepoBuilder {
-	mock := &MockRepoBuilder{ctrl: ctrl}
-	mock.recorder = &MockRepoBuilderMockRecorder{mock}
+// NewMockdependencies creates a new mock instance.
+func NewMockdependencies(ctrl *gomock.Controller) *Mockdependencies {
+	mock := &Mockdependencies{ctrl: ctrl}
+	mock.recorder = &MockdependenciesMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockRepoBuilder) EXPECT() *MockRepoBuilderMockRecorder {
+func (m *Mockdependencies) EXPECT() *MockdependenciesMockRecorder {
 	return m.recorder
 }
 
-// NewRepository mocks base method.
-func (m *MockRepoBuilder) NewRepository(db postgres.Database) add.Repository {
+// NewTransactionRepository mocks base method.
+func (m *Mockdependencies) NewTransactionRepository(db postgres.Database) add.TransactionRepository {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewRepository", db)
-	ret0, _ := ret[0].(add.Repository)
+	ret := m.ctrl.Call(m, "NewTransactionRepository", db)
+	ret0, _ := ret[0].(add.TransactionRepository)
 	return ret0
 }
 
-// NewRepository indicates an expected call of NewRepository.
-func (mr *MockRepoBuilderMockRecorder) NewRepository(db interface{}) *gomock.Call {
+// NewTransactionRepository indicates an expected call of NewTransactionRepository.
+func (mr *MockdependenciesMockRecorder) NewTransactionRepository(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRepository", reflect.TypeOf((*MockRepoBuilder)(nil).NewRepository), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewTransactionRepository", reflect.TypeOf((*Mockdependencies)(nil).NewTransactionRepository), db)
+}
+
+// NewWalletRepository mocks base method.
+func (m *Mockdependencies) NewWalletRepository(db postgres.Database) add.WalletRepository {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewWalletRepository", db)
+	ret0, _ := ret[0].(add.WalletRepository)
+	return ret0
+}
+
+// NewWalletRepository indicates an expected call of NewWalletRepository.
+func (mr *MockdependenciesMockRecorder) NewWalletRepository(db interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewWalletRepository", reflect.TypeOf((*Mockdependencies)(nil).NewWalletRepository), db)
 }

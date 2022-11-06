@@ -113,31 +113,31 @@ func (mr *MockRepositoryMockRecorder) GetBalance(ctx, walletID interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBalance", reflect.TypeOf((*MockRepository)(nil).GetBalance), ctx, walletID)
 }
 
-// MockBuilder is a mock of RepoBuilder interface.
-type MockBuilder struct {
+// Mockdependencies is a mock of dependencies interface.
+type Mockdependencies struct {
 	ctrl     *gomock.Controller
-	recorder *MockBuilderMockRecorder
+	recorder *MockdependenciesMockRecorder
 }
 
-// MockBuilderMockRecorder is the mock recorder for MockBuilder.
-type MockBuilderMockRecorder struct {
-	mock *MockBuilder
+// MockdependenciesMockRecorder is the mock recorder for Mockdependencies.
+type MockdependenciesMockRecorder struct {
+	mock *Mockdependencies
 }
 
-// NewMockBuilder creates a new mock instance.
-func NewMockBuilder(ctrl *gomock.Controller) *MockBuilder {
-	mock := &MockBuilder{ctrl: ctrl}
-	mock.recorder = &MockBuilderMockRecorder{mock}
+// NewMockdependencies creates a new mock instance.
+func NewMockdependencies(ctrl *gomock.Controller) *Mockdependencies {
+	mock := &Mockdependencies{ctrl: ctrl}
+	mock.recorder = &MockdependenciesMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockBuilder) EXPECT() *MockBuilderMockRecorder {
+func (m *Mockdependencies) EXPECT() *MockdependenciesMockRecorder {
 	return m.recorder
 }
 
 // NewRepository mocks base method.
-func (m *MockBuilder) NewRepository(db postgres.Database) get_balance.Repository {
+func (m *Mockdependencies) NewRepository(db postgres.Database) get_balance.Repository {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewRepository", db)
 	ret0, _ := ret[0].(get_balance.Repository)
@@ -145,7 +145,7 @@ func (m *MockBuilder) NewRepository(db postgres.Database) get_balance.Repository
 }
 
 // NewRepository indicates an expected call of NewRepository.
-func (mr *MockBuilderMockRecorder) NewRepository(db interface{}) *gomock.Call {
+func (mr *MockdependenciesMockRecorder) NewRepository(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRepository", reflect.TypeOf((*MockBuilder)(nil).NewRepository), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRepository", reflect.TypeOf((*Mockdependencies)(nil).NewRepository), db)
 }

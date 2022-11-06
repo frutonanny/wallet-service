@@ -1,0 +1,39 @@
+version: "3.8"
+
+# Для запуска зависимостей выполнить:
+# ~:$ docker-compose -f deployments/docker-compose.yaml up -d
+
+# Для запуска зависимостей и приложения выполнить:
+# ~:$ docker-compose -f deployments/docker-compose.yaml --profile dev up --build --detach
+
+# Для остановки зависимостей и приложения выполнить:
+# ~:$ docker-compose -f deployments/docker-compose.yaml down
+
+services:
+  postgres:
+    image: postgres
+    container_name: pgwalletservice
+    environment:
+      POSTGRES_DB: wallet_service
+      POSTGRES_USER: katya
+      POSTGRES_PASSWORD: katya
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgresql-data:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+
+  service:
+    build:
+      context: ../.
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    profiles:
+      - dev
+
+volumes:
+  postgresql-data:

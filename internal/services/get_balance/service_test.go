@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/frutonanny/wallet-service/internal/repositories"
-	internalErrors "github.com/frutonanny/wallet-service/internal/services/errors"
+	servicesErrors "github.com/frutonanny/wallet-service/internal/services/errors"
 	"github.com/frutonanny/wallet-service/internal/services/get_balance"
 	mock "github.com/frutonanny/wallet-service/internal/services/get_balance/mock"
 )
@@ -35,13 +35,12 @@ func TestGetBalance(t *testing.T) {
 		repo.EXPECT().ExistWallet(context.Background(), testUserID).Return(testWalletID, nil)
 		repo.EXPECT().GetBalance(context.Background(), testWalletID).Return(testBalance, nil)
 
-		builder := mock.NewMockBuilder(ctrl)
-		builder.EXPECT().NewRepository(gomock.Any()).Return(repo)
+		deps := mock.NewMockdependencies(ctrl)
+		deps.EXPECT().NewRepository(gomock.Any()).Return(repo)
 
 		log := mock.NewMocklogger(ctrl)
-		log.EXPECT().Info(gomock.Any())
 
-		service := get_balance.New(log, db).WithBuilder(builder)
+		service := get_balance.New(log, db).WithDependencies(deps)
 
 		balance, err := service.GetBalance(context.Background(), testUserID)
 		assert.NoError(t, err)
@@ -58,17 +57,17 @@ func TestGetBalance(t *testing.T) {
 			ExistWallet(context.Background(), testUserID).
 			Return(testFailed, repositories.ErrRepoWalletNotFound)
 
-		builder := mock.NewMockBuilder(ctrl)
-		builder.EXPECT().NewRepository(gomock.Any()).Return(repo)
+		deps := mock.NewMockdependencies(ctrl)
+		deps.EXPECT().NewRepository(gomock.Any()).Return(repo)
 
 		log := mock.NewMocklogger(ctrl)
 		log.EXPECT().Error(gomock.Any())
 
-		service := get_balance.New(log, db).WithBuilder(builder)
+		service := get_balance.New(log, db).WithDependencies(deps)
 
 		_, err := service.GetBalance(context.Background(), testUserID)
 		assert.Error(t, err)
-		assert.ErrorIs(t, err, internalErrors.ErrWalletNotFound)
+		assert.ErrorIs(t, err, servicesErrors.ErrWalletNotFound)
 	})
 
 	t.Run("get balance failed", func(t *testing.T) {
@@ -79,13 +78,13 @@ func TestGetBalance(t *testing.T) {
 		repo.EXPECT().ExistWallet(context.Background(), testUserID).Return(testWalletID, nil)
 		repo.EXPECT().GetBalance(context.Background(), testWalletID).Return(testBalance, testError)
 
-		builder := mock.NewMockBuilder(ctrl)
-		builder.EXPECT().NewRepository(gomock.Any()).Return(repo)
+		deps := mock.NewMockdependencies(ctrl)
+		deps.EXPECT().NewRepository(gomock.Any()).Return(repo)
 
 		log := mock.NewMocklogger(ctrl)
 		log.EXPECT().Error(gomock.Any())
 
-		service := get_balance.New(log, db).WithBuilder(builder)
+		service := get_balance.New(log, db).WithDependencies(deps)
 
 		_, err := service.GetBalance(context.Background(), testUserID)
 		assert.Error(t, err)

@@ -350,7 +350,7 @@ components:
           description: "Смещение по отсортированным записям."
         sortBy:
           type: string
-          enum: [ "date", "amount" ]
+          enum: [ "created_at", "amount" ]
           description: "Поле, по которому происходит сортировка (дате/сумме)."
           example: "date"
         direction:

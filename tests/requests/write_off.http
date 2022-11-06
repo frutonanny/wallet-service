@@ -1,0 +1,9 @@
+POST localhost:8081/v1/writeOff
+Content-Type: application/json
+
+{
+  "userID": 1,
+  "serviceID": 1,
+  "orderID": 1,
+  "price": 250
+}

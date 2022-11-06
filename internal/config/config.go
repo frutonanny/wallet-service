@@ -6,6 +6,10 @@ import (
 	"os"
 )
 
+const (
+	Arg = "config"
+)
+
 type Config struct {
 	DB      DBConfig    `json:"db"`
 	Service HttpService `json:"service"`

@@ -23,6 +23,7 @@ func MustConnect(dsn string) *sql.DB {
 	if err != nil {
 		panic(fmt.Errorf("opening pgx driver: %w", err))
 	}
+
 	if err := db.Ping(); err != nil {
 		panic(fmt.Errorf("connect db: %w", err))
 	}

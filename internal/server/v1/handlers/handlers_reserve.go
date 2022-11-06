@@ -11,12 +11,12 @@ import (
 	"github.com/frutonanny/wallet-service/pkg/errcodes"
 )
 
-func (h *Handlers) PostGetBalance(eCtx echo.Context) error {
+func (h *Handlers) PostReserve(eCtx echo.Context) error {
 	ctx := eCtx.Request().Context()
 
-	var req v1.GetBalanceRequest
+	var req v1.ReserveRequest
 	if err := eCtx.Bind(&req); err != nil {
-		return eCtx.JSON(http.StatusOK, v1.GetBalanceResponse{
+		return eCtx.JSON(http.StatusOK, v1.ReserveResponse{
 			Error: &v1.Error{
 				Code:    errcodes.InternalError,
 				Message: "internal server error",
@@ -24,7 +24,7 @@ func (h *Handlers) PostGetBalance(eCtx echo.Context) error {
 		})
 	}
 
-	balance, err := h.getBalanceService.GetBalance(ctx, req.UserID)
+	balance, err := h.reserveService.Reserve(ctx, req.UserID, req.ServiceID, req.OrderID, req.Price)
 	if err != nil {
 		code := errcodes.InternalError
 		msg := "internal server error"
@@ -34,16 +34,19 @@ func (h *Handlers) PostGetBalance(eCtx echo.Context) error {
 			msg = "wallet not found"
 		}
 
-		return eCtx.JSON(http.StatusOK, v1.GetBalanceResponse{
-			Error: &v1.Error{
-				Code:    code,
-				Message: msg,
-			},
-		})
+		if errors.Is(err, servicesErrors.ErrNotEnoughCash) {
+			code = errcodes.NotEnoughCash
+			msg = "not enough cash"
+		}
+
+		return eCtx.JSON(http.StatusOK, v1.ReserveResponse{Error: &v1.Error{
+			Code:    code,
+			Message: msg,
+		}})
 	}
 
-	return eCtx.JSON(http.StatusOK, v1.GetBalanceResponse{
-		Data: &v1.GetBalanceData{
+	return eCtx.JSON(http.StatusOK, v1.ReserveResponse{
+		Data: &v1.ReserveData{
 			Balance: balance,
 		},
 	})

@@ -11,12 +11,12 @@ import (
 	"github.com/frutonanny/wallet-service/pkg/errcodes"
 )
 
-func (h *Handlers) PostGetBalance(eCtx echo.Context) error {
+func (h *Handlers) PostWriteOff(eCtx echo.Context) error {
 	ctx := eCtx.Request().Context()
 
-	var req v1.GetBalanceRequest
+	var req v1.WriteOffRequest
 	if err := eCtx.Bind(&req); err != nil {
-		return eCtx.JSON(http.StatusOK, v1.GetBalanceResponse{
+		return eCtx.JSON(http.StatusOK, v1.WriteOffResponse{
 			Error: &v1.Error{
 				Code:    errcodes.InternalError,
 				Message: "internal server error",
@@ -24,7 +24,7 @@ func (h *Handlers) PostGetBalance(eCtx echo.Context) error {
 		})
 	}
 
-	balance, err := h.getBalanceService.GetBalance(ctx, req.UserID)
+	balance, err := h.writeOffService.WriteOff(ctx, req.UserID, req.ServiceID, req.OrderID, req.Price)
 	if err != nil {
 		code := errcodes.InternalError
 		msg := "internal server error"
@@ -34,7 +34,12 @@ func (h *Handlers) PostGetBalance(eCtx echo.Context) error {
 			msg = "wallet not found"
 		}
 
-		return eCtx.JSON(http.StatusOK, v1.GetBalanceResponse{
+		if errors.Is(err, servicesErrors.ErrOrderNotFound) {
+			code = errcodes.OrderNotFound
+			msg = "wallet not found"
+		}
+
+		return eCtx.JSON(http.StatusOK, v1.WriteOffResponse{
 			Error: &v1.Error{
 				Code:    code,
 				Message: msg,
@@ -42,8 +47,8 @@ func (h *Handlers) PostGetBalance(eCtx echo.Context) error {
 		})
 	}
 
-	return eCtx.JSON(http.StatusOK, v1.GetBalanceResponse{
-		Data: &v1.GetBalanceData{
+	return eCtx.JSON(http.StatusOK, v1.WriteOffResponse{
+		Data: &v1.WriteOffData{
 			Balance: balance,
 		},
 	})

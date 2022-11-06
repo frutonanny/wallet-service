@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	v1 "github.com/frutonanny/wallet-service/internal/generated/server/v1"
-	codes "github.com/frutonanny/wallet-service/pkg/responce_codes"
+	"github.com/frutonanny/wallet-service/pkg/errcodes"
 )
 
 func (h *Handlers) PostAdd(eCtx echo.Context) error {
@@ -16,7 +16,7 @@ func (h *Handlers) PostAdd(eCtx echo.Context) error {
 	if err := eCtx.Bind(&req); err != nil {
 		return eCtx.JSON(http.StatusOK, v1.AddResponse{
 			Error: &v1.Error{
-				Code:    codes.InternalError,
+				Code:    errcodes.InternalError,
 				Message: "internal server error",
 			},
 		})
@@ -26,7 +26,7 @@ func (h *Handlers) PostAdd(eCtx echo.Context) error {
 	if err != nil {
 		return eCtx.JSON(http.StatusOK, v1.AddResponse{
 			Error: &v1.Error{
-				Code:    codes.InternalError,
+				Code:    errcodes.InternalError,
 				Message: "internal server error",
 			},
 		})

@@ -1,0 +1,10 @@
+POST localhost:8081/v1/getTransactions
+Content-Type: application/json
+
+{
+  "userID": 1,
+  "limit": 10,
+  "offset": 0,
+  "sortBy": "amount",
+  "direction": "desc"
+}

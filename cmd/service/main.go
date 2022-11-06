@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
-	logger2 "github.com/frutonanny/wallet-service/internal/logger"
-	"github.com/frutonanny/wallet-service/internal/postgres"
-	"github.com/frutonanny/wallet-service/internal/services/add"
 	"log"
 	"net"
 	"os/signal"
@@ -14,10 +12,24 @@ import (
 
 	serviceConfig "github.com/frutonanny/wallet-service/internal/config"
 	serverGen "github.com/frutonanny/wallet-service/internal/generated/server/v1"
+	logger2 "github.com/frutonanny/wallet-service/internal/logger"
+	"github.com/frutonanny/wallet-service/internal/postgres"
+	"github.com/frutonanny/wallet-service/internal/services/add"
+	cancelSev "github.com/frutonanny/wallet-service/internal/services/cancel"
 	"github.com/frutonanny/wallet-service/internal/services/get_balance"
+	"github.com/frutonanny/wallet-service/internal/services/get_transactions"
+	"github.com/frutonanny/wallet-service/internal/services/reserve"
+	write_off "github.com/frutonanny/wallet-service/internal/services/write-off"
 )
 
-const path = "config/config.json"
+var configFile string
+
+func init() {
+	flag.StringVar(&configFile,
+		"config",
+		"config/config.local.json",
+		"Path to configuration file")
+}
 
 func main() {
 	if err := run(); err != nil {
@@ -29,7 +41,14 @@ func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	config := serviceConfig.Must(path)
+	flag.Parse()
+
+	f := flag.Lookup(serviceConfig.Arg)
+	if f == nil {
+		return errors.New("config arg must be set")
+	}
+
+	config := serviceConfig.Must(f.Value.String())
 
 	logger := logger2.Must()
 
@@ -54,8 +73,21 @@ func run() error {
 	// Services.
 	getBalanceService := get_balance.New(logger, db)
 	addService := add.New(logger, db)
+	reserveService := reserve.New(logger, db)
+	writeOffService := write_off.New(logger, db)
+	cancelService := cancelSev.New(logger, db)
+	getTransactions := get_transactions.New(logger, db)
 
-	srv, err := initServer(addr, swagger, getBalanceService, addService)
+	srv, err := initServer(
+		addr,
+		swagger,
+		getBalanceService,
+		addService,
+		reserveService,
+		writeOffService,
+		cancelService,
+		getTransactions,
+	)
 	if err != nil {
 		return fmt.Errorf("init server: %v", err)
 	}

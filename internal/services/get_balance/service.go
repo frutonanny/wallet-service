@@ -9,7 +9,7 @@ import (
 
 	"github.com/frutonanny/wallet-service/internal/postgres"
 	"github.com/frutonanny/wallet-service/internal/repositories"
-	internalErrors "github.com/frutonanny/wallet-service/internal/services/errors"
+	servicesErrors "github.com/frutonanny/wallet-service/internal/services/errors"
 )
 
 type logger interface {
@@ -22,44 +22,43 @@ type Repository interface {
 	GetBalance(ctx context.Context, walletID int64) (int64, error)
 }
 
-// RepoBuilder умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
+// dependencies умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
 // Нужен для написания юнит-тестов без подключения к базе.
-type RepoBuilder interface {
+type dependencies interface {
 	NewRepository(db postgres.Database) Repository
 }
 
 type Service struct {
-	logger      logger
-	db          *sql.DB
-	repoBuilder RepoBuilder
+	logger logger
+	db     *sql.DB
+	deps   dependencies
 }
 
 func New(logger logger, db *sql.DB) *Service {
 	return &Service{
-		logger:      logger,
-		db:          db,
-		repoBuilder: &builderImpl{},
+		logger: logger,
+		db:     db,
+		deps:   &dependenciesImpl{},
 	}
 }
 
-func (s *Service) WithBuilder(builder RepoBuilder) *Service {
-	s.repoBuilder = builder
+func (s *Service) WithDependencies(deps dependencies) *Service {
+	s.deps = deps
 	return s
 }
 
 // GetBalance - отдает баланс пользователя.
-// Алгоритм действий:
 // - проверяем есть ли кошелек у пользователя, если нет, то возвращаем ошибку - ErrWalletNotFound;
 // - отдаем баланс пользователя.
 func (s *Service) GetBalance(ctx context.Context, userID int64) (int64, error) {
-	repo := s.repoBuilder.NewRepository(s.db)
+	repo := s.deps.NewRepository(s.db)
 
 	// Проверяем есть ли кошелек у пользователя.
 	walletID, err := repo.ExistWallet(ctx, userID)
 	if err != nil {
 		if errors.Is(err, repositories.ErrRepoWalletNotFound) {
 			s.logger.Error(fmt.Sprintf("for user %d wallet not found", userID))
-			return 0, internalErrors.ErrWalletNotFound
+			return 0, servicesErrors.ErrWalletNotFound
 		}
 
 		s.logger.Error(fmt.Sprintf("exist wallet: %s", err))
@@ -72,8 +71,6 @@ func (s *Service) GetBalance(ctx context.Context, userID int64) (int64, error) {
 		s.logger.Error(fmt.Sprintf("get balance: %s", err))
 		return 0, fmt.Errorf("get balance: %w", err)
 	}
-
-	s.logger.Info(fmt.Sprintf("get balance of successfully for wallet: %d", walletID))
 
 	return balance, nil
 }

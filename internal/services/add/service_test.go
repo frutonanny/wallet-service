@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/frutonanny/wallet-service/internal/repositories"
 	"github.com/frutonanny/wallet-service/internal/services/add"
 	mock_add "github.com/frutonanny/wallet-service/internal/services/add/mock"
 )
@@ -34,56 +33,25 @@ func TestAdd(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		repo := mock_add.NewMockRepository(ctrl)
-		repo.EXPECT().ExistWallet(context.Background(), testUserID).Return(testWalletID, nil)
-		repo.EXPECT().Add(context.Background(), testWalletID, testCash).Return(testBalance, nil)
-		repo.EXPECT().
+		walletRepo := mock_add.NewMockWalletRepository(ctrl)
+		walletRepo.EXPECT().CreateIfNotExist(context.Background(), testUserID).Return(testWalletID, nil)
+		walletRepo.EXPECT().Add(context.Background(), testWalletID, testCash).Return(testBalance, nil)
+
+		txsRepo := mock_add.NewMockTransactionRepository(ctrl)
+		txsRepo.EXPECT().
 			AddTransaction(context.Background(), testWalletID, gomock.Any(), gomock.Any(), testCash).
 			Return(nil)
 
 		mock.ExpectCommit()
 
-		builder := mock_add.NewMockRepoBuilder(ctrl)
-		builder.EXPECT().NewRepository(gomock.Any()).Return(repo)
+		deps := mock_add.NewMockdependencies(ctrl)
+		deps.EXPECT().NewWalletRepository(gomock.Any()).Return(walletRepo)
+		deps.EXPECT().NewTransactionRepository(gomock.Any()).Return(txsRepo)
 
 		log := mock_add.NewMocklogger(ctrl)
 		log.EXPECT().Info(gomock.Any())
 
-		service := add.New(log, db).WithBuilder(builder)
-
-		balance, err := service.Add(context.Background(), testUserID, testCash)
-		assert.NoError(t, err)
-		assert.Equal(t, testBalance, balance)
-	})
-
-	t.Run("add cash successfully, created wallet", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		db, mock, err := sqlmock.New()
-		require.NoError(t, err)
-
-		mock.ExpectBegin()
-
-		repo := mock_add.NewMockRepository(ctrl)
-		repo.EXPECT().
-			ExistWallet(context.Background(), testUserID).
-			Return(int64(0), repositories.ErrRepoWalletNotFound)
-		repo.EXPECT().CreateWallet(context.Background(), testUserID).Return(testWalletID, nil)
-		repo.EXPECT().Add(context.Background(), testWalletID, testCash).Return(testBalance, nil)
-		repo.EXPECT().
-			AddTransaction(context.Background(), testWalletID, gomock.Any(), gomock.Any(), testCash).
-			Return(nil)
-
-		mock.ExpectCommit()
-
-		builder := mock_add.NewMockRepoBuilder(ctrl)
-		builder.EXPECT().NewRepository(gomock.Any()).Return(repo)
-
-		log := mock_add.NewMocklogger(ctrl)
-		log.EXPECT().Info(gomock.Any())
-
-		service := add.New(log, db).WithBuilder(builder)
+		service := add.New(log, db).WithDependencies(deps)
 
 		balance, err := service.Add(context.Background(), testUserID, testCash)
 		assert.NoError(t, err)
@@ -99,18 +67,79 @@ func TestAdd(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		repo := mock_add.NewMockRepository(ctrl)
-		repo.EXPECT().ExistWallet(context.Background(), testUserID).Return(testWalletID, testError)
+		walletRepo := mock_add.NewMockWalletRepository(ctrl)
+		walletRepo.EXPECT().CreateIfNotExist(context.Background(), testUserID).Return(testWalletID, testError)
 
 		mock.ExpectRollback()
 
-		builder := mock_add.NewMockRepoBuilder(ctrl)
-		builder.EXPECT().NewRepository(gomock.Any()).Return(repo)
+		deps := mock_add.NewMockdependencies(ctrl)
+		deps.EXPECT().NewWalletRepository(gomock.Any()).Return(walletRepo)
 
 		log := mock_add.NewMocklogger(ctrl)
 		log.EXPECT().Error(gomock.Any())
 
-		service := add.New(log, db).WithBuilder(builder)
+		service := add.New(log, db).WithDependencies(deps)
+
+		_, err = service.Add(context.Background(), testUserID, testCash)
+		assert.Error(t, err)
+	})
+
+	t.Run("add cash failed", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		walletRepo := mock_add.NewMockWalletRepository(ctrl)
+		walletRepo.EXPECT().CreateIfNotExist(context.Background(), testUserID).Return(testWalletID, nil)
+		walletRepo.EXPECT().Add(context.Background(), testWalletID, testCash).Return(testBalance, testError)
+
+		mock.ExpectRollback()
+
+		deps := mock_add.NewMockdependencies(ctrl)
+		deps.EXPECT().NewWalletRepository(gomock.Any()).Return(walletRepo)
+
+		log := mock_add.NewMocklogger(ctrl)
+		log.EXPECT().Error(gomock.Any())
+
+		service := add.New(log, db).WithDependencies(deps)
+
+		_, err = service.Add(context.Background(), testUserID, testCash)
+		assert.Error(t, err)
+	})
+
+	t.Run("add cash failed", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		walletRepo := mock_add.NewMockWalletRepository(ctrl)
+		walletRepo.EXPECT().CreateIfNotExist(context.Background(), testUserID).Return(testWalletID, nil)
+		walletRepo.EXPECT().Add(context.Background(), testWalletID, testCash).Return(testBalance, nil)
+
+		txsRepo := mock_add.NewMockTransactionRepository(ctrl)
+
+		txsRepo.EXPECT().
+			AddTransaction(context.Background(), testWalletID, gomock.Any(), gomock.Any(), testCash).
+			Return(testError)
+
+		mock.ExpectRollback()
+
+		deps := mock_add.NewMockdependencies(ctrl)
+		deps.EXPECT().NewWalletRepository(gomock.Any()).Return(walletRepo)
+		deps.EXPECT().NewTransactionRepository(gomock.Any()).Return(txsRepo)
+
+		log := mock_add.NewMocklogger(ctrl)
+		log.EXPECT().Error(gomock.Any())
+
+		service := add.New(log, db).WithDependencies(deps)
 
 		_, err = service.Add(context.Background(), testUserID, testCash)
 		assert.Error(t, err)

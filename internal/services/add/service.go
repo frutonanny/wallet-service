@@ -4,56 +4,50 @@ package add
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/frutonanny/wallet-service/internal/postgres"
-	"github.com/frutonanny/wallet-service/internal/repositories"
+	"github.com/frutonanny/wallet-service/internal/transactions"
 )
-
-const actionName = "incoming_transfer"
-
-var Data = struct {
-	Type string `json:"type"`
-}{
-	Type: "enrollment",
-}
 
 type logger interface {
 	Info(msg string)
 	Error(msg string)
 }
 
-type Repository interface {
-	ExistWallet(ctx context.Context, userID int64) (int64, error)
-	CreateWallet(ctx context.Context, userID int64) (int64, error)
+type WalletRepository interface {
+	CreateIfNotExist(ctx context.Context, userID int64) (int64, error)
 	Add(ctx context.Context, walletID int64, cash int64) (int64, error)
+}
+
+type TransactionRepository interface {
 	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error
 }
 
-// RepoBuilder умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
+// dependencies умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
 // Нужен для написания юнит-тестов без подключения к базе.
-type RepoBuilder interface {
-	NewRepository(db postgres.Database) Repository
+type dependencies interface {
+	NewWalletRepository(db postgres.Database) WalletRepository
+	NewTransactionRepository(db postgres.Database) TransactionRepository
 }
 
 type Service struct {
-	db      *sql.DB
-	logger  logger
-	builder RepoBuilder
+	db     *sql.DB
+	logger logger
+	deps   dependencies
 }
 
 func New(logger logger, db *sql.DB) *Service {
 	return &Service{
-		logger:  logger,
-		db:      db,
-		builder: &builderImpl{},
+		logger: logger,
+		db:     db,
+		deps:   &dependenciesImpl{},
 	}
 }
 
-func (s *Service) WithBuilder(builder RepoBuilder) *Service {
-	s.builder = builder
+func (s *Service) WithDependencies(deps dependencies) *Service {
+	s.deps = deps
 	return s
 }
 
@@ -80,39 +74,33 @@ func (s *Service) Add(ctx context.Context, userID, cash int64) (int64, error) {
 		}
 	}()
 
-	repo := s.builder.NewRepository(tx)
+	walletRepo := s.deps.NewWalletRepository(tx)
 
-	var walletID int64
-	// Проверяем есть ли кошелек у пользователя.
-	walletID, err = repo.ExistWallet(ctx, userID)
+	// Создаем кошелек пользователю, если еще не создан.
+	walletID, err := walletRepo.CreateIfNotExist(ctx, userID)
 	if err != nil {
-		if !errors.Is(err, repositories.ErrRepoWalletNotFound) {
-			s.logger.Error(fmt.Sprintf("exist wallet: %s", err))
-			return 0, fmt.Errorf("exist wallet: %v", err)
-		}
-		// Создаем кошелек
-		walletID, err = repo.CreateWallet(ctx, userID)
-		if err != nil {
-			s.logger.Error(fmt.Sprintf("create wallet: %s", err))
-			return 0, fmt.Errorf("create wallet: %v", err)
-		}
+		s.logger.Error(fmt.Sprintf("create if not exist: %s", err))
+		return 0, fmt.Errorf("create if not exist: %v", err)
 	}
 
-	balance, err := repo.Add(ctx, walletID, cash)
+	// Зачисляем переданную сумму на кошелек пользователя.
+	balance, err := walletRepo.Add(ctx, walletID, cash)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("add cash: %s", err))
 		return 0, fmt.Errorf("add cash: %v", err)
 	}
 
-	// TODO
-	payload, err := json.Marshal(Data)
+	// Генерируем payload.
+	payload, err := transactions.EnrollmentPayload()
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("marshal payloud: %s", err))
-		return 0, fmt.Errorf("marshal payloud: %v", err)
+		s.logger.Error(fmt.Sprintf("generated payload: %s", err))
+		return 0, fmt.Errorf("generated payload: %v", err)
 	}
 
+	txsRepo := s.deps.NewTransactionRepository(tx)
+
 	// Добавляем транзакцию о проведеннной денежной операции.
-	if err := repo.AddTransaction(ctx, walletID, actionName, payload, cash); err != nil {
+	if err := txsRepo.AddTransaction(ctx, walletID, transactions.TypeAdd, payload, cash); err != nil {
 		s.logger.Error(fmt.Sprintf("add transaction: %s", err))
 		return 0, fmt.Errorf("add transaction: %v", err)
 	}
