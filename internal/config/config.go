@@ -12,11 +12,19 @@ const (
 
 type Config struct {
 	DB      DBConfig    `json:"db"`
+	Minio   MinioConfig `json:"minio"`
 	Service HttpService `json:"service"`
 }
 
 type DBConfig struct {
 	DSN string `json:"dsn"`
+}
+
+type MinioConfig struct {
+	Endpoint        string `json:"endpoint"`
+	PublicEndpoint  string `json:"public_endpoint"`
+	AccessKeyID     string `json:"access_key_id"`
+	SecretAccessKey string `json:"secret_access_key"`
 }
 
 type HttpService struct {

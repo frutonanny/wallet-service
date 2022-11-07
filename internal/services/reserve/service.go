@@ -19,22 +19,26 @@ type logger interface {
 	Error(msg string)
 }
 
-type walletRepository interface {
+type WalletRepository interface {
 	ExistWallet(ctx context.Context, userID int64) (int64, error)
 	Reserve(ctx context.Context, walletID, cash int64) (int64, error)
-	CreateOrder(ctx context.Context, walletID, externalID, serviceID, amount int64, status string) (int64, error)
-	AddOrderTransactions(ctx context.Context, orderID int64, nameType string) error
 }
 
-type transactionRepository interface {
+type OrderRepository interface {
+	CreateOrder(ctx context.Context, walletID, externalID, serviceID, amount int64, status string) (int64, error)
+	AddOrderTransactions(ctx context.Context, orderID int64, nameType string) (int64, error)
+}
+
+type TransactionRepository interface {
 	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error
 }
 
 // dependencies умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
 // Нужен для написания юнит-тестов без подключения к базе.
 type dependencies interface {
-	NewWalletRepository(db postgres.Database) walletRepository
-	NewTransactionRepository(db postgres.Database) transactionRepository
+	NewWalletRepository(db postgres.Database) WalletRepository
+	NewOrderRepository(db postgres.Database) OrderRepository
+	NewTransactionRepository(db postgres.Database) TransactionRepository
 }
 
 type Service struct {
@@ -107,15 +111,17 @@ func (s *Service) Reserve(ctx context.Context, userID, serviceID, externalID, pr
 		return 0, fmt.Errorf("reserve: %v", err)
 	}
 
+	orderRepo := s.deps.NewOrderRepository(tx)
+
 	// Создаем заказ со статусом "reservation".
-	orderID, err := walletRepo.CreateOrder(ctx, walletID, externalID, serviceID, price, orders.StatusReserved)
+	orderID, err := orderRepo.CreateOrder(ctx, walletID, externalID, serviceID, price, orders.StatusReserved)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("create order: %s", err))
 		return 0, fmt.Errorf("create order: %v", err)
 	}
 
 	// Добавляем транзакцию о созданном заказе
-	if err := walletRepo.AddOrderTransactions(ctx, orderID, orders.StatusReserved); err != nil {
+	if _, err := orderRepo.AddOrderTransactions(ctx, orderID, orders.StatusReserved); err != nil {
 		s.logger.Error(fmt.Sprintf("add order transaction: %s", err))
 		return 0, fmt.Errorf("add order transaction: %v", err)
 	}

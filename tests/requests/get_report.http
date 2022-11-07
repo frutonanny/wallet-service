@@ -1,0 +1,6 @@
+POST localhost:8081/v1/getReport
+Content-Type: application/json
+
+{
+  "period": "2022-11"
+}

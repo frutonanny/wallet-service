@@ -66,19 +66,7 @@ create table report
 );
 
 create index report_period_idx on report (period desc);
-
--- Таблица содержит информацию о существующих услугах
-create table services
-(
-    id     serial primary key,
-    "name" text not null
-);
-
--- Заполняем таблицу services видами услуг.
-insert into services("name")
-values ('more views'),
-       ('highlighting'),
-       ('XL-advert');
+create unique index report_period_service_id_idx on report (period, service_id);
 
 -- +goose StatementBegin
 create function trigger_set_timestamp()
@@ -116,5 +104,4 @@ drop table report;
 drop table order_transactions;
 drop table transactions;
 drop table orders;
-drop table services;
 drop table wallets;

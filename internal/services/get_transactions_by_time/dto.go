@@ -2,9 +2,9 @@ package get_transactions_by_time
 
 import (
 	"fmt"
-	"github.com/frutonanny/wallet-service/internal/repositories/transaction"
 	"time"
 
+	"github.com/frutonanny/wallet-service/internal/repositories/transaction"
 	"github.com/frutonanny/wallet-service/internal/transactions"
 )
 
@@ -14,7 +14,7 @@ type Transaction struct {
 	CreatedAt   time.Time
 }
 
-// adaptTxs преобразует список транзакций, полученный из базы, в список транзакций, который выдает метод.
+// adaptTxs преобразует список транзакций, полученный из базы, в список транзакций, который отдает метод.
 func adaptTxs(txs []transaction.Transaction) ([]Transaction, error) {
 	result := make([]Transaction, 0, len(txs))
 

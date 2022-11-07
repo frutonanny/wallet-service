@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/frutonanny/wallet-service/internal/orders"
 	"github.com/frutonanny/wallet-service/internal/postgres"
@@ -18,23 +19,31 @@ type logger interface {
 	Error(msg string)
 }
 
-type walletRepository interface {
+type WalletRepository interface {
 	ExistWallet(ctx context.Context, userID int64) (int64, error)
+	WriteOff(ctx context.Context, walletID, amount, delta int64) (int64, error)
+}
+type OrderRepository interface {
 	GetOrderByServiceID(ctx context.Context, externalID, serviceID int64) (int64, string, int64, error)
 	UpdateOrder(ctx context.Context, orderID, amount int64, status string) error
-	WriteOff(ctx context.Context, walletID, amount, delta int64) (int64, error)
-	AddOrderTransactions(ctx context.Context, orderID int64, nameType string) error
+	AddOrderTransactions(ctx context.Context, orderID int64, nameType string) (int64, error)
 }
 
-type transactionRepository interface {
+type TransactionRepository interface {
 	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error
+}
+
+type ReportRepository interface {
+	AddRecord(ctx context.Context, serviceID, amount int64, now time.Time) error
 }
 
 // dependencies умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
 // Нужен для написания юнит-тестов без подключения к базе.
 type dependencies interface {
-	NewWalletRepository(db postgres.Database) walletRepository
-	NewTransactionRepository(db postgres.Database) transactionRepository
+	NewWalletRepository(db postgres.Database) WalletRepository
+	NewOrderRepository(db postgres.Database) OrderRepository
+	NewTransactionRepository(db postgres.Database) TransactionRepository
+	NewReportRepository(db postgres.Database) ReportRepository
 }
 
 type Service struct {
@@ -65,7 +74,7 @@ func (s *Service) WithDependencies(deps dependencies) *Service {
 // - обновляем информацию о заказе.
 // - добавляем транзакцию об обновленном заказе;
 // - добавляем транзакцию о списанных средствах;
-// - TODO записываем в отчет
+// - Записываем в отчет списание.
 // - в ответ отдаем обновленный баланс пользователя в копейках.
 func (s *Service) WriteOff(ctx context.Context, userID, serviceID, externalID, price int64) (int64, error) {
 	// Стартуем транзакцию.
@@ -98,8 +107,10 @@ func (s *Service) WriteOff(ctx context.Context, userID, serviceID, externalID, p
 		return 0, fmt.Errorf("wallet not exist: %v", err)
 	}
 
+	orderRepo := s.deps.NewOrderRepository(tx)
+
 	// Проверяем есть ли заказ с переданным идентификатором внешнего заказа.
-	orderID, status, amount, err := walletRepo.GetOrderByServiceID(ctx, externalID, serviceID)
+	orderID, status, amount, err := orderRepo.GetOrderByServiceID(ctx, externalID, serviceID)
 	if err != nil {
 		if errors.Is(err, repositories.ErrRepoOrderNotFound) {
 			return 0, servicesErrors.ErrOrderNotFound
@@ -122,13 +133,13 @@ func (s *Service) WriteOff(ctx context.Context, userID, serviceID, externalID, p
 	}
 
 	// Обновляем информацию в заказе.
-	if err := walletRepo.UpdateOrder(ctx, orderID, price, orders.StatusWrittenOff); err != nil {
+	if err := orderRepo.UpdateOrder(ctx, orderID, price, orders.StatusWrittenOff); err != nil {
 		s.logger.Error(fmt.Sprintf("update order: %s", err))
 		return 0, fmt.Errorf("update order: %v", err)
 	}
 
 	// Добавляем транзакцию об изменении статуса заказа.
-	if err := walletRepo.AddOrderTransactions(ctx, orderID, orders.StatusWrittenOff); err != nil {
+	if _, err := orderRepo.AddOrderTransactions(ctx, orderID, orders.StatusWrittenOff); err != nil {
 		s.logger.Error(fmt.Sprintf("add order transaction: %s", err))
 		return 0, fmt.Errorf("add order transaction: %v", err)
 	}
@@ -154,6 +165,13 @@ func (s *Service) WriteOff(ctx context.Context, userID, serviceID, externalID, p
 	if err := txsRepo.AddTransaction(ctx, walletID, transactions.TypeWriteOff, payload, price); err != nil {
 		s.logger.Error(fmt.Sprintf("add transaction: %s", err))
 		return 0, fmt.Errorf("add transaction: %v", err)
+	}
+
+	reportRepo := s.deps.NewReportRepository(tx)
+
+	if err := reportRepo.AddRecord(ctx, serviceID, amount, time.Now()); err != nil {
+		s.logger.Error(fmt.Sprintf("add record: %s", err))
+		return 0, fmt.Errorf("add record: %v", err)
 	}
 
 	// Завершаем транзакцию.

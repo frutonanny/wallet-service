@@ -3,8 +3,9 @@ package transaction
 import (
 	"context"
 	"fmt"
-	"github.com/frutonanny/wallet-service/internal/postgres"
 	"time"
+
+	"github.com/frutonanny/wallet-service/internal/postgres"
 )
 
 type Repository struct {
@@ -100,17 +101,17 @@ func (r *Repository) GetTransactionsByTime(
 	var result []Transaction
 
 	for rows.Next() {
-		tr := Transaction{}
+		tx := Transaction{}
 
 		err = rows.Scan(
-			&tr.Type, &tr.Payload, &tr.Amount, &tr.CreatedAt,
+			&tx.Type, &tx.Payload, &tx.Amount, &tx.CreatedAt,
 		)
 
 		if err != nil {
 			return nil, fmt.Errorf("scan: %w", err)
 		}
 
-		result = append(result, tr)
+		result = append(result, tx)
 	}
 
 	if rows.Err() != nil {

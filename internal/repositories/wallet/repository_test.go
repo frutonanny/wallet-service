@@ -2,7 +2,6 @@ package wallet
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,8 +12,7 @@ import (
 )
 
 const (
-	fileConfig   = "../../../config/config.json"
-	typeIncoming = "incoming_transfer"
+	fileConfig = "../../../config/config.local.json"
 )
 
 var (
@@ -206,10 +204,9 @@ func TestWriteOff(t *testing.T) {
 
 		_, err = walletRepo.WriteOff(context.Background(), walletID, 2*testCash, testDelta)
 		assert.Error(t, err)
-		assert.ErrorIs(t, repositories.ErrRepoNotEnoughReservedCash, err)
 	})
 
-	t.Run("reserve amount failed", func(t *testing.T) {
+	t.Run("write-off amount failed", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
@@ -294,37 +291,6 @@ func TestGetBalance(t *testing.T) {
 		walletRepo := New(tx)
 
 		_, err := walletRepo.GetBalance(context.Background(), testWalletID)
-		assert.Error(t, err)
-	})
-}
-
-func TestAddTransaction(t *testing.T) {
-	t.Run("add transaction successfully", func(t *testing.T) {
-		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
-		defer cancel()
-
-		walletRepo := New(tx)
-
-		walletID, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
-
-		payload, err := json.Marshal(data)
-		assert.NoError(t, err)
-
-		err = walletRepo.AddTransaction(context.Background(), walletID, typeIncoming, payload, testCash)
-		assert.NoError(t, err)
-	})
-
-	t.Run("add transaction failed", func(t *testing.T) {
-		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
-		defer cancel()
-
-		walletRepo := New(tx)
-
-		payload, err := json.Marshal(data)
-		assert.NoError(t, err)
-
-		err = walletRepo.AddTransaction(context.Background(), testWalletID, typeIncoming, payload, testCash)
 		assert.Error(t, err)
 	})
 }

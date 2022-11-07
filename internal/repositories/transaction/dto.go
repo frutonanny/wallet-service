@@ -6,7 +6,7 @@ const (
 	Asc    Direction = "asc"
 	Desc   Direction = "desc"
 	Amount SortBy    = "amount"
-	Date   SortBy    = "date"
+	Date   SortBy    = "created_at"
 )
 
 type SortBy string

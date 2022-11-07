@@ -18,11 +18,11 @@ type logger interface {
 	Error(msg string)
 }
 
-type walletRepository interface {
+type WalletRepository interface {
 	ExistWallet(ctx context.Context, userID int64) (int64, error)
 }
 
-type transactionRepository interface {
+type TransactionRepository interface {
 	GetTransactionsByTime(
 		ctx context.Context,
 		walletID int64,
@@ -33,8 +33,8 @@ type transactionRepository interface {
 // dependencies умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
 // Нужен для написания юнит-тестов без подключения к базе.
 type dependencies interface {
-	NewWalletRepository(db postgres.Database) walletRepository
-	NewTransactionRepository(db postgres.Database) transactionRepository
+	NewWalletRepository(db postgres.Database) WalletRepository
+	NewTransactionRepository(db postgres.Database) TransactionRepository
 }
 
 type Service struct {
@@ -59,7 +59,7 @@ func (s *Service) WithDependencies(deps dependencies) *Service {
 // GetTransactionsByTime - отдает список транзакций пользователя, отсортированный по переданному параметру.
 // - проверяем есть ли кошелек у пользователя, если нет, то отдаем ошибку ErrWalletNotFound.
 // - отдает список транзакций.
-func (s *Service) GetTransactionsByTime(ctx context.Context, userID int64, start, end string) ([]Transaction, error) {
+func (s *Service) GetTransactionsByTime(ctx context.Context, userID int64, start, end time.Time) ([]Transaction, error) {
 	walletRepo := s.deps.NewWalletRepository(s.db)
 
 	// Проверяем есть ли кошелек у пользователя.
@@ -74,20 +74,20 @@ func (s *Service) GetTransactionsByTime(ctx context.Context, userID int64, start
 		return nil, fmt.Errorf("exist wallet: %w", err)
 	}
 
-	timeStart, err := time.Parse(time.RFC3339, start)
-	if err != nil {
-		return nil, fmt.Errorf("parse start time: %w", err)
-	}
-
-	timeEnd, err := time.Parse(time.RFC3339, end)
-	if err != nil {
-		return nil, fmt.Errorf("parse end time: %w", err)
-	}
+	//timeStart, err := time.Parse(time.RFC3339, start)
+	//if err != nil {
+	//	return nil, fmt.Errorf("parse start time: %w", err)
+	//}
+	//
+	//timeEnd, err := time.Parse(time.RFC3339, end)
+	//if err != nil {
+	//	return nil, fmt.Errorf("parse end time: %w", err)
+	//}
 
 	txsRepo := s.deps.NewTransactionRepository(s.db)
 
 	// Отдаем список транзакций, отсортированный по переданному параметру.
-	txs, err := txsRepo.GetTransactionsByTime(ctx, walletID, timeStart, timeEnd)
+	txs, err := txsRepo.GetTransactionsByTime(ctx, walletID, start, end)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("get transactions: %s", err))
 		return nil, fmt.Errorf("get transactions: %w", err)

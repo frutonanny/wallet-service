@@ -8,7 +8,9 @@ import (
 	"github.com/frutonanny/wallet-service/internal/services/add"
 	"github.com/frutonanny/wallet-service/internal/services/cancel"
 	"github.com/frutonanny/wallet-service/internal/services/get_balance"
+	"github.com/frutonanny/wallet-service/internal/services/get_report"
 	"github.com/frutonanny/wallet-service/internal/services/get_transactions"
+	"github.com/frutonanny/wallet-service/internal/services/get_transactions_by_time"
 	"github.com/frutonanny/wallet-service/internal/services/reserve"
 	write_off "github.com/frutonanny/wallet-service/internal/services/write-off"
 )
@@ -22,6 +24,8 @@ func initServer(
 	writeOffService *write_off.Service,
 	cancelService *cancel.Service,
 	getTransactions *get_transactions.Service,
+	getTransactionsByTime *get_transactions_by_time.Service,
+	getReport *get_report.Service,
 ) (*server.Server, error) {
 	h := handlers.NewHandlers(
 		getBalanceService,
@@ -29,7 +33,10 @@ func initServer(
 		reserveService,
 		writeOffService,
 		cancelService,
-		getTransactions)
+		getTransactions,
+		getTransactionsByTime,
+		getReport,
+	)
 
 	srv := server.New(
 		addr,

@@ -242,7 +242,7 @@ components:
           type: integer
           format: int64
           description: "Идентификатор пользователя."
-          example: TODO
+          example: 1
         serviceID:
           type: integer
           format: int64
@@ -386,18 +386,18 @@ components:
           type: string
           minLength: 1
           maxLength: 1000
-          description: todo
-          example: todo
+          description: "Описывает вид денежной операции."
+          example: "Зачисление средств"
         amount:
           type: integer
           format: int64
-          description: todo
-          example: todo
+          description: "Количество денежных средств, задействованных в данной денежной операции."
+          example: 500
         createdAt:
           type: string
           format: date-time
-          description: todo
-          example: todo
+          description: "Время, когда была совершена операция."
+          example: "2022-11-06T13:05:49.73709Z"
 
     GetTransactionsByTimeRequest:
       required:
@@ -437,9 +437,9 @@ components:
 
     GetReportRequest:
       required:
-        - date
+        - period
       properties:
-        date:
+        period:
           type: string
           minLength: 1
           maxLength: 7
@@ -455,9 +455,9 @@ components:
 
     GetReportData:
       required:
-        - reference
+        - url
       properties:
-        reference:
+        url:
           type: string
           minLength: 1
           description: "Ссылка на CSV файл."

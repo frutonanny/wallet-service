@@ -2,6 +2,12 @@
   "db": {
     "dsn": "host=localhost port=5432 user=katya password=katya dbname=wallet_service sslmode=disable"
   },
+  "minio": {
+    "endpoint": "localhost:9000",
+    "public_endpoint": "localhost:9000",
+    "access_key_id": "katya",
+    "secret_access_key": "katyakatya"
+  },
   "service": {
     "port": "8081",
     "host": "127.0.0.1"

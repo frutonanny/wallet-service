@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"context"
-
-	"github.com/labstack/echo/v4"
+	"github.com/frutonanny/wallet-service/internal/services/get_transactions_by_time"
+	"time"
 
 	"github.com/frutonanny/wallet-service/internal/services/get_transactions"
 )
@@ -35,14 +35,23 @@ type getTransactions interface {
 		direction get_transactions.Direction,
 	) ([]get_transactions.Transaction, error)
 }
+type getTransactionsByTime interface {
+	GetTransactionsByTime(ctx context.Context, userID int64, start, end time.Time) ([]get_transactions_by_time.Transaction, error)
+}
+
+type getReport interface {
+	GetReport(ctx context.Context, period string) (string, error)
+}
 
 type Handlers struct {
-	getBalanceService getBalanceService
-	addService        addService
-	reserveService    reserveService
-	writeOffService   writeOffService
-	cancelService     cancelService
-	getTransactions   getTransactions
+	getBalanceService     getBalanceService
+	addService            addService
+	reserveService        reserveService
+	writeOffService       writeOffService
+	cancelService         cancelService
+	getTransactions       getTransactions
+	getTransactionsByTime getTransactionsByTime
+	getReport             getReport
 }
 
 func NewHandlers(
@@ -52,18 +61,17 @@ func NewHandlers(
 	writeOffService writeOffService,
 	cancelService cancelService,
 	getTransactions getTransactions,
+	getTransactionsByTime getTransactionsByTime,
+	getReport getReport,
 ) *Handlers {
 	return &Handlers{
-		getBalanceService: getBalanceService,
-		addService:        addService,
-		reserveService:    reserveService,
-		writeOffService:   writeOffService,
-		cancelService:     cancelService,
-		getTransactions:   getTransactions,
+		getBalanceService:     getBalanceService,
+		addService:            addService,
+		reserveService:        reserveService,
+		writeOffService:       writeOffService,
+		cancelService:         cancelService,
+		getTransactions:       getTransactions,
+		getTransactionsByTime: getTransactionsByTime,
+		getReport:             getReport,
 	}
-}
-
-func (h *Handlers) PostGetTransactionsByTime(ctx echo.Context) error {
-	//TODO implement me
-	panic("implement me")
 }

@@ -1,3 +1,4 @@
+//go:generate mockgen --source=service.go --destination=mock/service.go
 package cancel
 
 import (
@@ -5,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/frutonanny/wallet-service/internal/orders"
 	"github.com/frutonanny/wallet-service/internal/postgres"
 	"github.com/frutonanny/wallet-service/internal/repositories"
@@ -17,23 +19,27 @@ type logger interface {
 	Error(msg string)
 }
 
-type walletRepository interface {
+type WalletRepository interface {
 	ExistWallet(ctx context.Context, userID int64) (int64, error)
-	GetOrder(ctx context.Context, externalID int64) (int64, string, int64, error)
-	UpdateOrderStatus(ctx context.Context, orderID int64, status string) error
 	Cancel(ctx context.Context, walletID, cash int64) (int64, error)
-	AddOrderTransactions(ctx context.Context, orderID int64, nameType string) error
 }
 
-type transactionRepository interface {
+type OrderRepository interface {
+	GetOrder(ctx context.Context, externalID int64) (int64, string, int64, error)
+	UpdateOrderStatus(ctx context.Context, orderID int64, status string) error
+	AddOrderTransactions(ctx context.Context, orderID int64, nameType string) (int64, error)
+}
+
+type TransactionRepository interface {
 	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error
 }
 
 // dependencies умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
 // Нужен для написания юнит-тестов без подключения к базе.
 type dependencies interface {
-	NewWalletRepository(db postgres.Database) walletRepository
-	NewTransactionRepository(db postgres.Database) transactionRepository
+	NewWalletRepository(db postgres.Database) WalletRepository
+	NewOrderRepository(db postgres.Database) OrderRepository
+	NewTransactionRepository(db postgres.Database) TransactionRepository
 }
 
 type Service struct {
@@ -96,8 +102,10 @@ func (s *Service) Cancel(ctx context.Context, userID, externalID int64) (int64, 
 		return 0, fmt.Errorf("wallet not exist: %v", err)
 	}
 
+	orderRepo := s.deps.NewOrderRepository(tx)
+
 	// Проверяем есть ли заказ с переданным идентификатором внешнего заказа.
-	orderID, status, amount, err := walletRepo.GetOrder(ctx, externalID)
+	orderID, status, amount, err := orderRepo.GetOrder(ctx, externalID)
 	if err != nil {
 		if errors.Is(err, repositories.ErrRepoOrderNotFound) {
 			return 0, servicesErrors.ErrOrderNotFound
@@ -114,13 +122,13 @@ func (s *Service) Cancel(ctx context.Context, userID, externalID int64) (int64, 
 	}
 
 	//	Обновляем информацию в заказе.
-	if err := walletRepo.UpdateOrderStatus(ctx, orderID, status); err != nil {
+	if err := orderRepo.UpdateOrderStatus(ctx, orderID, orders.StatusCancelled); err != nil {
 		s.logger.Error(fmt.Sprintf("update order: %s", err))
 		return 0, fmt.Errorf("update order: %v", err)
 	}
 
 	// Добавляем транзакцию об изменении статуса заказа.
-	if err := walletRepo.AddOrderTransactions(ctx, orderID, orders.StatusCancelled); err != nil {
+	if _, err := orderRepo.AddOrderTransactions(ctx, orderID, orders.StatusCancelled); err != nil {
 		s.logger.Error(fmt.Sprintf("add order transaction: %s", err))
 		return 0, fmt.Errorf("add order transaction: %v", err)
 	}
