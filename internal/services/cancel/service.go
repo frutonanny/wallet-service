@@ -104,7 +104,7 @@ func (s *Service) Cancel(ctx context.Context, userID, externalID int64) (int64, 
 
 	orderRepo := s.deps.NewOrderRepository(tx)
 
-	// Проверяем есть ли заказ с переданным идентификатором внешнего заказа.
+	// Проверяем, есть ли заказ с переданным идентификатором внешнего заказа.
 	orderID, status, amount, err := orderRepo.GetOrder(ctx, externalID)
 	if err != nil {
 		if errors.Is(err, repositories.ErrRepoOrderNotFound) {

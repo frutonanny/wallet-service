@@ -17,7 +17,7 @@ type Database interface {
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
 
-// MustConnect - устанавливает соединение с базой.
+// MustConnect устанавливает соединение с базой.
 func MustConnect(dsn string) *sql.DB {
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
@@ -31,7 +31,7 @@ func MustConnect(dsn string) *sql.DB {
 	return db
 }
 
-// MustMigrate - применяет миграции из переданной директории
+// MustMigrate применяет миграции из переданной директории
 func MustMigrate(db *sql.DB) {
 	if err := goose.Up(db, pathMigration); err != nil {
 		panic(fmt.Errorf("apply migrations: %w", err))

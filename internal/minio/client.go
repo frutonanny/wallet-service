@@ -7,6 +7,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
+// Must инициализирует minio-клиента.
 func Must(
 	endpoint string,
 	accessKeyID string,
