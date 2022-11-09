@@ -25,7 +25,7 @@ func New(db postgres.Database) *Repository {
 }
 
 // ExistWallet - проверяет есть ли кошелек у пользователя, если есть возврает id кошелька.
-// Если нет, тозвращаем ошибку ErrRepoWalletNotFound
+// Если нет, то возвращаем ошибку ErrRepoWalletNotFound
 func (r *Repository) ExistWallet(ctx context.Context, userID int64) (int64, error) {
 	var walletID int64
 
