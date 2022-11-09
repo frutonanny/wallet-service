@@ -170,10 +170,12 @@ components:
           type: integer
           format: int64
           description: "Идентификатор пользователя."
+          example: 1
         cash:
           type: integer
           format: int64
           description: "Сумма в копейках."
+          example: 1000
 
     AddResponse:
       properties:
@@ -190,6 +192,7 @@ components:
           type: integer
           format: int64
           description: "Текущий баланс пользователя в копейках с учетом пополнения."
+          example: 1000
 
     ReserveRequest:
       required:
@@ -202,18 +205,22 @@ components:
           type: integer
           format: int64
           description: "Идентификатор пользователя."
+          example: 1
         serviceID:
           type: integer
           format: int64
           description: "Идентификатор услуги."
+          example: 1
         orderID:
           type: integer
           format: int64
           description: "Идентификатор заказа"
+          example: 1
         price:
           type: integer
           format: int64
           description: "Стоимость заказа в копейках."
+          example: 1000
 
     ReserveResponse:
       properties:
@@ -230,6 +237,7 @@ components:
           type: integer
           format: int64
           description: "Текущий баланс пользователя в копейках за вычетом зарезервированных средств."
+          example: 1000
 
     WriteOffRequest:
       required:
@@ -247,14 +255,17 @@ components:
           type: integer
           format: int64
           description: "Идентификатор услуги."
+          example: 1
         orderID:
           type: integer
           format: int64
           description: "Идентификатор заказа"
+          example: 1
         price:
           type: integer
           format: int64
           description: "Стоимость заказа в копейках."
+          example: 1000
 
     WriteOffResponse:
       properties:
@@ -271,6 +282,7 @@ components:
           type: integer
           format: int64
           description: "Текущий баланс пользователя в копейках за вычетом списанных средств."
+          example: 1000
 
     CancelRequest:
       required:
@@ -281,10 +293,12 @@ components:
           type: integer
           format: int64
           description: "Идентификатор пользователя."
+          example: 1
         orderID:
           type: integer
           format: int64
           description: "Идентификатор заказа"
+          example: 1
 
     CancelResponse:
       properties:
@@ -301,6 +315,7 @@ components:
           type: integer
           format: int64
           description: "Текущий баланс пользователя в копейках с учетом разрезервированных средств."
+          example: 1000
 
     GetBalanceRequest:
       required:
@@ -310,6 +325,7 @@ components:
           type: integer
           format: int64
           description: "Идентификатор пользователя."
+          example: 1
 
     GetBalanceResponse:
       properties:
@@ -326,6 +342,7 @@ components:
           type: integer
           format: int64
           description: "Текущий баланс пользователя в копейках."
+          example: 1000
 
     GetTransactionsRequest:
       required:
@@ -339,21 +356,24 @@ components:
           type: integer
           format: int64
           description: "Идентификатор пользователя."
+          example: 1
         limit:
           type: integer
           format: int64
           maximum: 100
           description: "Количество записей."
+          example: 10
         offset:
           type: integer
           format: int64
           minimum: 0
           description: "Смещение по записям."
+          example: 1
         sortBy:
           type: string
           enum: [ "created_at", "amount" ]
           description: "Поле, по которому происходит сортировка (по дате / по сумме)."
-          example: "date"
+          example: "created_at"
         direction:
           type: string
           enum: [ "asc", "desc" ]
@@ -410,14 +430,17 @@ components:
           type: integer
           format: int64
           description: "Идентификатор пользователя."
+          example: 1
         start:
           type: string
           format: date-time
           description: "Временная точка в формате RFC3339, от которой начинается поиск транзакций."
+          example: "2022-07-02T10:00:00Z"
         end:
           type: string
           format: date-time
           description: "Временная точка в формате RFC3339, до которой происходит поиск транзакций."
+          example: "2022-07-04T10:00:00Z"
 
     GetTransactionsByTimeResponse:
       properties:

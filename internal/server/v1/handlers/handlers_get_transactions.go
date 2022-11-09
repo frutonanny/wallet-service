@@ -80,7 +80,7 @@ func adaptSortBy(sortBy v1.GetTransactionsRequestSortBy) get_transactions.SortBy
 	case v1.Amount:
 		return get_transactions.Amount
 	default:
-		return get_transactions.Date
+		return get_transactions.CreatedAt
 	}
 }
 

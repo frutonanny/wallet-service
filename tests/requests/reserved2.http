@@ -1,0 +1,9 @@
+POST localhost:8081/v1/reserve
+Content-Type: application/json
+
+{
+  "userID": 1,
+  "serviceID": 2,
+  "orderID": 2,
+  "price": 500
+}

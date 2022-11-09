@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	Asc    Direction = "asc"
-	Desc   Direction = "desc"
-	Amount SortBy    = "amount"
-	Date   SortBy    = "date"
+	Asc       Direction = "asc"
+	Desc      Direction = "desc"
+	Amount    SortBy    = "amount"
+	CreatedAt SortBy    = "created_at"
 )
 
 type SortBy string
@@ -24,7 +24,7 @@ func adaptSortBy(sortBy SortBy) repoTxs.SortBy {
 	case Amount:
 		return repoTxs.Amount
 	default:
-		return repoTxs.Date
+		return repoTxs.CreatedAt
 	}
 }
 

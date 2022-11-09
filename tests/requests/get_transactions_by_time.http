@@ -1,0 +1,8 @@
+POST localhost:8081/v1/getTransactionsByTime
+Content-Type: application/json
+
+{
+  "userID": 1,
+  "start": "2022-11-09T07:06:00Z",
+  "end": "2022-11-09T07:20:00Z"
+}

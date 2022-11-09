@@ -1,7 +1,7 @@
-POST localhost:8081/v1/add
+POST localhost:8081/v1/cancel
 Content-Type: application/json
 
 {
   "userID": 1,
-  "cash": 1000
+  "orderID": 2
 }

@@ -99,7 +99,7 @@ func TestRepository_GetTransactions(t *testing.T) {
 		repo := repoTxs.New(tx)
 
 		// Получим список транзакций, отсортированный по убыванию даты с ограничениями: смещение = 1, лимит = 4.
-		result, err := repo.GetTransactions(ctx, testWalletID, testLimit, testOffset, repoTxs.Date, repoTxs.Desc)
+		result, err := repo.GetTransactions(ctx, testWalletID, testLimit, testOffset, repoTxs.CreatedAt, repoTxs.Desc)
 		require.NoError(t, err)
 		assert.Len(t, result, 4)
 
@@ -148,7 +148,7 @@ func TestRepository_GetTransactions(t *testing.T) {
 
 		repo := repoTxs.New(tx)
 
-		// Получаем пустой результат, так как кошелька не существует. TODO
+		// Получаем пустой результат, так как кошелька не существует.
 		result, err := repo.GetTransactions(ctx, testFailed, testLimit, testOffset, repoTxs.Amount, repoTxs.Asc)
 		require.NoError(t, err)
 		require.Empty(t, result)
@@ -202,7 +202,7 @@ func TestRepository_GetTransactionsByTime(t *testing.T) {
 
 		repo := repoTxs.New(tx)
 
-		// Получаем пустой результат, так как кошелька не существует. TODO
+		// Получаем пустой результат, так как кошелька не существует.
 		result, err := repo.GetTransactionsByTime(ctx, testFailed, start, end)
 		require.NoError(t, err)
 		assert.Empty(t, result)

@@ -3,10 +3,10 @@ package transaction
 import "time"
 
 const (
-	Asc    Direction = "asc"
-	Desc   Direction = "desc"
-	Amount SortBy    = "amount"
-	Date   SortBy    = "created_at"
+	Asc       Direction = "asc"
+	Desc      Direction = "desc"
+	Amount    SortBy    = "amount"
+	CreatedAt SortBy    = "created_at"
 )
 
 type SortBy string
