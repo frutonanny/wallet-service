@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/frutonanny/wallet-service/internal/repositories"
 	servicesErrors "github.com/frutonanny/wallet-service/internal/services/errors"
@@ -24,16 +25,18 @@ const (
 
 var testError = errors.New("error")
 
-func TestGetBalance(t *testing.T) {
+func TestService_GetBalance(t *testing.T) {
 	var db *sql.DB
 
 	t.Run("get balance successfully", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		ctx := context.Background()
+
 		repo := mock.NewMockRepository(ctrl)
-		repo.EXPECT().ExistWallet(context.Background(), testUserID).Return(testWalletID, nil)
-		repo.EXPECT().GetBalance(context.Background(), testWalletID).Return(testBalance, nil)
+		repo.EXPECT().ExistWallet(ctx, testUserID).Return(testWalletID, nil)
+		repo.EXPECT().GetBalance(ctx, testWalletID).Return(testBalance, nil)
 
 		deps := mock.NewMockdependencies(ctrl)
 		deps.EXPECT().NewRepository(gomock.Any()).Return(repo)
@@ -42,19 +45,21 @@ func TestGetBalance(t *testing.T) {
 
 		service := get_balance.New(log, db).WithDependencies(deps)
 
-		balance, err := service.GetBalance(context.Background(), testUserID)
-		assert.NoError(t, err)
-		assert.Equal(t, testBalance, balance)
+		balance, err := service.GetBalance(ctx, testUserID)
+		require.NoError(t, err)
+		assert.EqualValues(t, testBalance, balance)
 	})
 
 	t.Run("get balance failed, wallet not exist", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		ctx := context.Background()
+
 		repo := mock.NewMockRepository(ctrl)
 		repo.
 			EXPECT().
-			ExistWallet(context.Background(), testUserID).
+			ExistWallet(ctx, testUserID).
 			Return(testFailed, repositories.ErrRepoWalletNotFound)
 
 		deps := mock.NewMockdependencies(ctrl)
@@ -65,8 +70,8 @@ func TestGetBalance(t *testing.T) {
 
 		service := get_balance.New(log, db).WithDependencies(deps)
 
-		_, err := service.GetBalance(context.Background(), testUserID)
-		assert.Error(t, err)
+		_, err := service.GetBalance(ctx, testUserID)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, servicesErrors.ErrWalletNotFound)
 	})
 
@@ -74,9 +79,11 @@ func TestGetBalance(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		ctx := context.Background()
+
 		repo := mock.NewMockRepository(ctrl)
-		repo.EXPECT().ExistWallet(context.Background(), testUserID).Return(testWalletID, nil)
-		repo.EXPECT().GetBalance(context.Background(), testWalletID).Return(testBalance, testError)
+		repo.EXPECT().ExistWallet(ctx, testUserID).Return(testWalletID, nil)
+		repo.EXPECT().GetBalance(ctx, testWalletID).Return(testBalance, testError)
 
 		deps := mock.NewMockdependencies(ctrl)
 		deps.EXPECT().NewRepository(gomock.Any()).Return(repo)
@@ -86,8 +93,7 @@ func TestGetBalance(t *testing.T) {
 
 		service := get_balance.New(log, db).WithDependencies(deps)
 
-		_, err := service.GetBalance(context.Background(), testUserID)
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, testError)
+		_, err := service.GetBalance(ctx, testUserID)
+		require.Error(t, err)
 	})
 }

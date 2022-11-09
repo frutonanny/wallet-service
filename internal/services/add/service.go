@@ -18,11 +18,11 @@ type logger interface {
 
 type WalletRepository interface {
 	CreateIfNotExist(ctx context.Context, userID int64) (int64, error)
-	Add(ctx context.Context, walletID int64, cash int64) (int64, error)
+	Add(ctx context.Context, walletID int64, amount int64) (int64, error)
 }
 
 type TransactionRepository interface {
-	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error
+	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) (int64, error)
 }
 
 // dependencies умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
@@ -56,7 +56,7 @@ func (s *Service) WithDependencies(deps dependencies) *Service {
 // - зачисляем переданную сумму на кошелек пользователя;
 // - добавляем транзакцию о внесенных средствах;
 // - в ответ отдаем текущий баланс пользователя в копейках с учетом пополнения.
-func (s *Service) Add(ctx context.Context, userID, cash int64) (int64, error) {
+func (s *Service) Add(ctx context.Context, userID, amount int64) (int64, error) {
 	// Стартуем транзакцию.
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -84,10 +84,10 @@ func (s *Service) Add(ctx context.Context, userID, cash int64) (int64, error) {
 	}
 
 	// Зачисляем переданную сумму на кошелек пользователя.
-	balance, err := walletRepo.Add(ctx, walletID, cash)
+	balance, err := walletRepo.Add(ctx, walletID, amount)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("add cash: %s", err))
-		return 0, fmt.Errorf("add cash: %v", err)
+		s.logger.Error(fmt.Sprintf("add amount: %s", err))
+		return 0, fmt.Errorf("add amount: %v", err)
 	}
 
 	// Генерируем payload.
@@ -99,8 +99,8 @@ func (s *Service) Add(ctx context.Context, userID, cash int64) (int64, error) {
 
 	txsRepo := s.deps.NewTransactionRepository(tx)
 
-	// Добавляем транзакцию о проведеннной денежной операции.
-	if err := txsRepo.AddTransaction(ctx, walletID, transactions.TypeAdd, payload, cash); err != nil {
+	// Добавляем транзакцию о проведенной денежной операции.
+	if _, err := txsRepo.AddTransaction(ctx, walletID, transactions.TypeAdd, payload, amount); err != nil {
 		s.logger.Error(fmt.Sprintf("add transaction: %s", err))
 		return 0, fmt.Errorf("add transaction: %v", err)
 	}
@@ -111,7 +111,7 @@ func (s *Service) Add(ctx context.Context, userID, cash int64) (int64, error) {
 		return 0, fmt.Errorf("commit tx: %v", err)
 	}
 
-	s.logger.Info(fmt.Sprintf("cash added for wallet: %d", walletID))
+	s.logger.Info(fmt.Sprintf("amount added for wallet: %d", walletID))
 
 	return balance, nil
 }

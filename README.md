@@ -22,7 +22,7 @@ curl -X POST --location "http://localhost:8081/v1/add" \
     -H "Content-Type: application/json" \
     -d "{
           \"userID\": 1,
-          \"cash\": 1000
+          \"amount\": 1000
         }"
 ```
 

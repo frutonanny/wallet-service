@@ -42,7 +42,8 @@ func (r *Repository) CreateOrder(
 	return orderID, nil
 }
 
-// GetOrderByServiceID проверяет есть ли заказ с переданным идентификатором внешнего заказа и возращает информацию о заказе.
+// GetOrderByServiceID проверяет есть ли заказ с переданным идентификатором внешнего заказа и возращает информацию
+// о заказе.
 // Если заказа нет, то возвращаем ошибку ErrRepoOrderNotFound.
 func (r *Repository) GetOrderByServiceID(
 	ctx context.Context,
@@ -65,7 +66,7 @@ func (r *Repository) GetOrderByServiceID(
 }
 
 // GetOrder проверяет есть ли заказ с переданным идентификатором внешнего заказа и возращает
-// идентификатор и статус заказа.
+// идентификатор, статус заказа и его стоимость.
 // Если заказа нет, то возвращаем ошибку ErrRepoOrderNotFound.
 func (r *Repository) GetOrder(ctx context.Context, externalID int64) (int64, string, int64, error) {
 	var orderID, amount int64

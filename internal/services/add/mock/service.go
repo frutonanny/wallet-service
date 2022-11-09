@@ -84,18 +84,18 @@ func (m *MockWalletRepository) EXPECT() *MockWalletRepositoryMockRecorder {
 }
 
 // Add mocks base method.
-func (m *MockWalletRepository) Add(ctx context.Context, walletID, cash int64) (int64, error) {
+func (m *MockWalletRepository) Add(ctx context.Context, walletID, amount int64) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Add", ctx, walletID, cash)
+	ret := m.ctrl.Call(m, "Add", ctx, walletID, amount)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Add indicates an expected call of Add.
-func (mr *MockWalletRepositoryMockRecorder) Add(ctx, walletID, cash interface{}) *gomock.Call {
+func (mr *MockWalletRepositoryMockRecorder) Add(ctx, walletID, amount interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockWalletRepository)(nil).Add), ctx, walletID, cash)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockWalletRepository)(nil).Add), ctx, walletID, amount)
 }
 
 // CreateIfNotExist mocks base method.
@@ -137,11 +137,12 @@ func (m *MockTransactionRepository) EXPECT() *MockTransactionRepositoryMockRecor
 }
 
 // AddTransaction mocks base method.
-func (m *MockTransactionRepository) AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error {
+func (m *MockTransactionRepository) AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddTransaction", ctx, walletID, action, payload, amount)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AddTransaction indicates an expected call of AddTransaction.

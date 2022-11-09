@@ -1,3 +1,4 @@
+//go:generate mockgen --source=service.go --destination=mock/service.go
 package get_transactions_by_time
 
 import (
@@ -73,16 +74,6 @@ func (s *Service) GetTransactionsByTime(ctx context.Context, userID int64, start
 		s.logger.Error(fmt.Sprintf("exist wallet: %s", err))
 		return nil, fmt.Errorf("exist wallet: %w", err)
 	}
-
-	//timeStart, err := time.Parse(time.RFC3339, start)
-	//if err != nil {
-	//	return nil, fmt.Errorf("parse start time: %w", err)
-	//}
-	//
-	//timeEnd, err := time.Parse(time.RFC3339, end)
-	//if err != nil {
-	//	return nil, fmt.Errorf("parse end time: %w", err)
-	//}
 
 	txsRepo := s.deps.NewTransactionRepository(s.db)
 

@@ -17,8 +17,9 @@ import (
 const (
 	testUserID   = int64(1)
 	testWalletID = int64(1)
-	testCash     = int64(1_000)
+	testAmount   = int64(1_000)
 	testBalance  = int64(1_000)
+	testTxID     = int64(0)
 )
 
 var testError = errors.New("error")
@@ -35,12 +36,12 @@ func TestAdd(t *testing.T) {
 
 		walletRepo := mock_add.NewMockWalletRepository(ctrl)
 		walletRepo.EXPECT().CreateIfNotExist(context.Background(), testUserID).Return(testWalletID, nil)
-		walletRepo.EXPECT().Add(context.Background(), testWalletID, testCash).Return(testBalance, nil)
+		walletRepo.EXPECT().Add(context.Background(), testWalletID, testAmount).Return(testBalance, nil)
 
 		txsRepo := mock_add.NewMockTransactionRepository(ctrl)
 		txsRepo.EXPECT().
-			AddTransaction(context.Background(), testWalletID, gomock.Any(), gomock.Any(), testCash).
-			Return(nil)
+			AddTransaction(context.Background(), testWalletID, gomock.Any(), gomock.Any(), testAmount).
+			Return(testTxID, nil)
 
 		mock.ExpectCommit()
 
@@ -53,8 +54,8 @@ func TestAdd(t *testing.T) {
 
 		service := add.New(log, db).WithDependencies(deps)
 
-		balance, err := service.Add(context.Background(), testUserID, testCash)
-		assert.NoError(t, err)
+		balance, err := service.Add(context.Background(), testUserID, testAmount)
+		require.NoError(t, err)
 		assert.Equal(t, testBalance, balance)
 	})
 
@@ -80,7 +81,7 @@ func TestAdd(t *testing.T) {
 
 		service := add.New(log, db).WithDependencies(deps)
 
-		_, err = service.Add(context.Background(), testUserID, testCash)
+		_, err = service.Add(context.Background(), testUserID, testAmount)
 		assert.Error(t, err)
 	})
 
@@ -95,7 +96,7 @@ func TestAdd(t *testing.T) {
 
 		walletRepo := mock_add.NewMockWalletRepository(ctrl)
 		walletRepo.EXPECT().CreateIfNotExist(context.Background(), testUserID).Return(testWalletID, nil)
-		walletRepo.EXPECT().Add(context.Background(), testWalletID, testCash).Return(testBalance, testError)
+		walletRepo.EXPECT().Add(context.Background(), testWalletID, testAmount).Return(testBalance, testError)
 
 		mock.ExpectRollback()
 
@@ -107,7 +108,7 @@ func TestAdd(t *testing.T) {
 
 		service := add.New(log, db).WithDependencies(deps)
 
-		_, err = service.Add(context.Background(), testUserID, testCash)
+		_, err = service.Add(context.Background(), testUserID, testAmount)
 		assert.Error(t, err)
 	})
 
@@ -122,13 +123,13 @@ func TestAdd(t *testing.T) {
 
 		walletRepo := mock_add.NewMockWalletRepository(ctrl)
 		walletRepo.EXPECT().CreateIfNotExist(context.Background(), testUserID).Return(testWalletID, nil)
-		walletRepo.EXPECT().Add(context.Background(), testWalletID, testCash).Return(testBalance, nil)
+		walletRepo.EXPECT().Add(context.Background(), testWalletID, testAmount).Return(testBalance, nil)
 
 		txsRepo := mock_add.NewMockTransactionRepository(ctrl)
 
 		txsRepo.EXPECT().
-			AddTransaction(context.Background(), testWalletID, gomock.Any(), gomock.Any(), testCash).
-			Return(testError)
+			AddTransaction(context.Background(), testWalletID, gomock.Any(), gomock.Any(), testAmount).
+			Return(testTxID, testError)
 
 		mock.ExpectRollback()
 
@@ -141,7 +142,7 @@ func TestAdd(t *testing.T) {
 
 		service := add.New(log, db).WithDependencies(deps)
 
-		_, err = service.Add(context.Background(), testUserID, testCash)
+		_, err = service.Add(context.Background(), testUserID, testAmount)
 		assert.Error(t, err)
 	})
 }

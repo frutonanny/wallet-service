@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"net/http"
 	"time"
 
@@ -43,18 +44,28 @@ func New(
 }
 
 func (s *Server) Run(ctx context.Context) error {
-	go func() {
+	eg := &errgroup.Group{}
+
+	eg.Go(func() error {
 		<-ctx.Done()
 
 		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		defer cancel()
 
-		_ = s.srv.Shutdown(ctx)
-	}()
+		if err := s.srv.Shutdown(ctx); err != nil {
+			return fmt.Errorf("shutdown: %v", err)
+		}
 
-	if err := s.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return fmt.Errorf("listen and serve: %w", err)
-	}
+		return nil
+	})
 
-	return nil
+	eg.Go(func() error {
+		if err := s.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("listen and serve: %w", err)
+		}
+
+		return nil
+	})
+
+	return eg.Wait()
 }

@@ -28,10 +28,12 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile,
+	flag.StringVar(
+		&configFile,
 		"config",
 		"config/config.local.json",
-		"Path to configuration file")
+		"Path to configuration file",
+	)
 }
 
 func main() {
@@ -53,7 +55,7 @@ func run() error {
 
 	config := serviceConfig.Must(f.Value.String())
 
-	logger := logger2.Must()
+	logger := logger2.New()
 
 	// Postgres.
 	db := postgres.MustConnect(config.DB.DSN)

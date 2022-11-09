@@ -1,208 +1,260 @@
-package wallet
+package wallet_test
 
 import (
 	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	serviceConfig "github.com/frutonanny/wallet-service/internal/config"
+	"github.com/frutonanny/wallet-service/internal/postgres"
 	"github.com/frutonanny/wallet-service/internal/repositories"
+	repoWallet "github.com/frutonanny/wallet-service/internal/repositories/wallet"
 	testingboilerplate "github.com/frutonanny/wallet-service/internal/testing_boilerplate"
 )
 
 const (
-	fileConfig = "../../../config/config.local.json"
-)
-
-var (
-	config       = serviceConfig.Must(fileConfig)
+	fileConfig   = "../../../config/config.local.json"
 	testUserID   = int64(10)
 	testWalletID = int64(1)
-	testCash     = int64(1_000)
+	testAmount   = int64(1_000)
 	testDelta    = int64(0)
-	data         = struct {
-		Type string `json:"type"`
-	}{
-		Type: "enrollment",
-	}
 )
 
-func TestCreateWallet(t *testing.T) {
+var config = serviceConfig.Must(fileConfig)
+
+func TestRepository_CreateWallet(t *testing.T) {
+	ctx := context.Background()
 	t.Run("create wallet successfully", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		_, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
+		// Создаем кошелек.
+		walletID, err := walletRepo.CreateWallet(ctx, testUserID)
+		require.NoError(t, err)
+		assert.NotEmpty(t, walletID)
+
+		// Проверяем, что кошелек создался.
+		walletID2, err := walletRepo.ExistWallet(ctx, testUserID)
+		require.NoError(t, err)
+		assert.EqualValues(t, walletID, walletID2)
 	})
 }
 
-func TestExitWallet(t *testing.T) {
+func TestRepository_ExistWallet(t *testing.T) {
+	ctx := context.Background()
 	t.Run("checked exist wallet successfully", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		walletID, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
+		// Создаем кошелек.
+		walletID, err := walletRepo.CreateWallet(ctx, testUserID)
+		require.NoError(t, err)
+		assert.NotEmpty(t, walletID)
 
-		newWalletID, err := walletRepo.ExistWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
-		assert.Equal(t, walletID, newWalletID)
+		// Проверяем, что кошелек создался.
+		walletID2, err := walletRepo.ExistWallet(ctx, testUserID)
+		require.NoError(t, err)
+		assert.EqualValues(t, walletID, walletID2)
 	})
 
 	t.Run("checked exist wallet failed", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		_, err := walletRepo.ExistWallet(context.Background(), testUserID)
-		assert.Error(t, err)
+		_, err := walletRepo.ExistWallet(ctx, testUserID)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, repositories.ErrRepoWalletNotFound)
 	})
 }
 
-func TestCreateIfNotExist(t *testing.T) {
-	t.Run("create wallet if not exist successfully", func(t *testing.T) {
+func TestRepository_CreateIfNotExist(t *testing.T) {
+	ctx := context.Background()
+	t.Run("wallet already created", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		walletID, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
+		// Создаем кошелек.
+		walletID, err := walletRepo.CreateWallet(ctx, testUserID)
+		require.NoError(t, err)
 
-		walletID2, err := walletRepo.CreateIfNotExist(context.Background(), testUserID)
-		assert.NoError(t, err)
-		assert.Equal(t, walletID, walletID2)
+		// Создаем вновь кошелек пользователю, для которого создали ранее. Ожидаем, что запись не обновится
+		// и получим тот же walletID.
+		walletID2, err := walletRepo.CreateIfNotExist(ctx, testUserID)
+		require.NoError(t, err)
+		assert.EqualValues(t, walletID, walletID2)
 	})
 
-	t.Run("create wallet if not exist successfully", func(t *testing.T) {
+	t.Run("create wallet if not exist ", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		_, err := walletRepo.CreateIfNotExist(context.Background(), testUserID)
-		assert.NoError(t, err)
+		// Создаем кошелек, так как ранее кошелек не был создан.
+		walletID, err := walletRepo.CreateIfNotExist(ctx, testUserID)
+		require.NoError(t, err)
+
+		// Проверяем, что кошелек создался.
+		walletID2, err := walletRepo.ExistWallet(ctx, testUserID)
+		require.NoError(t, err)
+		assert.EqualValues(t, walletID, walletID2)
 	})
 }
 
-func TestAdd(t *testing.T) {
+func TestRepository_Add(t *testing.T) {
+	ctx := context.Background()
 	t.Run("added amount successfully", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		walletID, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
+		// Создаем кошелек.
+		walletID, err := walletRepo.CreateWallet(ctx, testUserID)
+		require.NoError(t, err)
 
-		balance, err := walletRepo.Add(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
-		assert.Equal(t, testCash, balance)
+		// Добавляем на баланс сумму testAmount. В ответ получаем баланс = testAmount.
+		balance, err := walletRepo.Add(ctx, walletID, testAmount)
+		require.NoError(t, err)
+		assert.EqualValues(t, testAmount, balance)
 	})
 
 	t.Run("added amount failed", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		_, err := walletRepo.Add(context.Background(), testWalletID, testCash)
+		// Получаем ошибку, так как кошелька не существует.
+		_, err := walletRepo.Add(ctx, testWalletID, testAmount)
 		assert.Error(t, err)
 	})
 }
 
-func TestReserve(t *testing.T) {
+func TestRepository_Reserve(t *testing.T) {
+	ctx := context.Background()
 	t.Run("reserve amount successfully", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		walletID, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
+		// Создаем кошелек.
+		walletID, err := walletRepo.CreateWallet(ctx, testUserID)
+		require.NoError(t, err)
 
-		balance1, err := walletRepo.Add(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
+		// Добавляем на баланс сумму testAmount.
+		balance1, err := walletRepo.Add(ctx, walletID, testAmount)
+		require.NoError(t, err)
 
-		balance2, err := walletRepo.Reserve(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
-		assert.Equal(t, balance1-testCash, balance2)
+		// Резервируем сумму testAmount. В ответ получаем измененный баланс balance1-testAmount
+		balance2, err := walletRepo.Reserve(ctx, walletID, testAmount)
+		require.NoError(t, err)
+		assert.EqualValues(t, balance1-testAmount, balance2)
+
+		// Проверяем зарезервированную сумму.
+		reservation := getReservation(ctx, t, tx, walletID)
+		assert.EqualValues(t, testAmount, reservation)
 	})
 
 	t.Run("reserve amount failed, not enough cash", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		walletID, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
+		// Создаем кошелек.
+		walletID, err := walletRepo.CreateWallet(ctx, testUserID)
+		require.NoError(t, err)
 
-		_, err = walletRepo.Add(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
+		// Добавляем на баланс сумму testAmount.
+		_, err = walletRepo.Add(ctx, walletID, testAmount)
+		require.NoError(t, err)
 
-		_, err = walletRepo.Reserve(context.Background(), walletID, 2*testCash)
-		assert.Error(t, err)
-		assert.ErrorIs(t, repositories.ErrRepoNotEnoughCash, err)
+		// Резервируем сумму testAmount. В ответ получаем ошибку ErrRepoNotEnoughCash.
+		_, err = walletRepo.Reserve(ctx, walletID, 2*testAmount)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, repositories.ErrRepoNotEnoughCash)
 	})
 
 	t.Run("reserve amount failed", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		_, err := walletRepo.Reserve(context.Background(), testWalletID, testCash)
+		// Получаем ошибку, так как кошелька не существует.
+		_, err := walletRepo.Reserve(ctx, testWalletID, testAmount)
 		assert.Error(t, err)
 	})
 }
 
-func TestWriteOff(t *testing.T) {
+func TestRepository_WriteOff(t *testing.T) {
+	ctx := context.Background()
 	t.Run("write-off amount successfully", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		walletID, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
+		// Создаем кошелек.
+		walletID, err := walletRepo.CreateWallet(ctx, testUserID)
+		require.NoError(t, err)
 
-		balance1, err := walletRepo.Add(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
+		// Добавляем на баланс сумму testAmount.
+		balance1, err := walletRepo.Add(ctx, walletID, testAmount)
+		require.NoError(t, err)
 
-		balance2, err := walletRepo.Reserve(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
-		assert.Equal(t, balance1-testCash, balance2)
+		// Резервируем сумму testAmount. В ответ получаем измененный баланс balance1-testAmount.
+		balance2, err := walletRepo.Reserve(ctx, walletID, testAmount)
+		require.NoError(t, err)
+		assert.EqualValues(t, balance1-testAmount, balance2)
 
-		balance3, err := walletRepo.WriteOff(context.Background(), walletID, testCash, testDelta)
-		assert.NoError(t, err)
-		assert.Equal(t, balance2, balance3)
+		// Проверяем зарезервированную сумму.
+		reservation := getReservation(ctx, t, tx, walletID)
+		assert.EqualValues(t, testAmount, reservation)
+
+		// Списываем зарезервированную сумму. Баланс не должен измениться (разница между зарезервированным ранее
+		// и списываемым testDelta=0)
+		balance3, err := walletRepo.WriteOff(ctx, walletID, testAmount, testDelta)
+		require.NoError(t, err)
+		assert.EqualValues(t, balance2, balance3)
+
+		// Проверяем зарезервированную сумму. Она должна быть = 0.
+		reservation2 := getReservation(ctx, t, tx, walletID)
+		assert.EqualValues(t, 0, reservation2)
 	})
 
 	t.Run("write-off amount failed, not enough reserved cash", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		walletID, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
+		// Создаем кошелек.
+		walletID, err := walletRepo.CreateWallet(ctx, testUserID)
+		require.NoError(t, err)
 
-		_, err = walletRepo.Add(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
+		// Добавляем на баланс сумму testAmount.
+		_, err = walletRepo.Add(ctx, walletID, testAmount)
+		require.NoError(t, err)
 
-		_, err = walletRepo.Reserve(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
+		// Резервируем сумму testAmount. В ответ получаем измененный баланс balance1-testAmount.
+		_, err = walletRepo.Reserve(ctx, walletID, testAmount)
+		require.NoError(t, err)
 
-		_, err = walletRepo.WriteOff(context.Background(), walletID, 2*testCash, testDelta)
+		// Списываем бОльшую сумму, чем зарезервировано. Ожидаем ошибку.
+		_, err = walletRepo.WriteOff(ctx, walletID, 2*testAmount, testDelta)
 		assert.Error(t, err)
 	})
 
@@ -210,92 +262,100 @@ func TestWriteOff(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		_, err := walletRepo.WriteOff(context.Background(), testWalletID, testCash, testDelta)
+		// Получаем ошибку, так как кошелька не существует.
+		_, err := walletRepo.WriteOff(ctx, testWalletID, testAmount, testDelta)
 		assert.Error(t, err)
 	})
 }
 
-func TestCancel(t *testing.T) {
+func TestRepository_Cancel(t *testing.T) {
+	ctx := context.Background()
 	t.Run("cancel amount successfully", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		walletID, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
+		// Создаем кошелек.
+		walletID, err := walletRepo.CreateWallet(ctx, testUserID)
+		require.NoError(t, err)
 
-		balance1, err := walletRepo.Add(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
+		// Добавляем на баланс сумму testAmount.
+		balance1, err := walletRepo.Add(ctx, walletID, testAmount)
+		require.NoError(t, err)
 
-		balance2, err := walletRepo.Reserve(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
-		assert.Equal(t, balance1-testCash, balance2)
+		// Резервируем сумму testAmount. В ответ получаем измененный баланс balance1-testAmount.
+		balance2, err := walletRepo.Reserve(ctx, walletID, testAmount)
+		require.NoError(t, err)
+		assert.EqualValues(t, balance1-testAmount, balance2)
 
-		balance3, err := walletRepo.Cancel(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
-		assert.Equal(t, balance1, balance3)
-	})
+		// Проверяем зарезервированную сумму.
+		reservation := getReservation(ctx, t, tx, walletID)
+		assert.EqualValues(t, testAmount, reservation)
 
-	t.Run("cancel amount failed, not enough reserved cash", func(t *testing.T) {
-		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
-		defer cancel()
+		// Разрезервируем сумму testAmount.
+		balance3, err := walletRepo.Cancel(ctx, walletID, testAmount)
+		require.NoError(t, err)
+		assert.EqualValues(t, balance1, balance3)
 
-		walletRepo := New(tx)
-
-		walletID, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
-
-		_, err = walletRepo.Add(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
-
-		_, err = walletRepo.Reserve(context.Background(), walletID, testCash)
-		assert.NoError(t, err)
-
-		_, err = walletRepo.Cancel(context.Background(), walletID, 2*testCash)
-		assert.Error(t, err)
+		// Проверяем, что сумму разрезервирована. Она должна быть = 0.
+		reservation2 := getReservation(ctx, t, tx, walletID)
+		assert.EqualValues(t, 0, reservation2)
 	})
 
 	t.Run("cancel amount failed", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		_, err := walletRepo.Cancel(context.Background(), testWalletID, testCash)
+		// Получаем ошибку, так как кошелька не существует.
+		_, err := walletRepo.Cancel(ctx, testWalletID, testAmount)
 		assert.Error(t, err)
 	})
 }
 
-func TestGetBalance(t *testing.T) {
+func TestRepository_GetBalance(t *testing.T) {
+	ctx := context.Background()
 	t.Run("get balance successfully", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		walletID, err := walletRepo.CreateWallet(context.Background(), testUserID)
-		assert.NoError(t, err)
+		// Создаем кошелек.
+		walletID, err := walletRepo.CreateWallet(ctx, testUserID)
+		require.NoError(t, err)
 
-		balance, err := walletRepo.GetBalance(context.Background(), walletID)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(0), balance)
+		// Запрашиваем баланс, получаем дефолтное значение.
+		balance, err := walletRepo.GetBalance(ctx, walletID)
+		require.NoError(t, err)
+		assert.EqualValues(t, 0, balance)
 	})
 
 	t.Run("get balance failed", func(t *testing.T) {
 		tx, cancel := testingboilerplate.InitDB(t, config.DB.DSN)
 		defer cancel()
 
-		walletRepo := New(tx)
+		walletRepo := repoWallet.New(tx)
 
-		_, err := walletRepo.GetBalance(context.Background(), testWalletID)
+		// Получаем ошибку, так как кошелька не существует.
+		_, err := walletRepo.GetBalance(ctx, testWalletID)
 		assert.Error(t, err)
 	})
 }
 
-//query := []string{`
-//					insert into transactions(wallet_id, "type", payload, amount)
-//					values(10, typeIncoming, '{ "type": "enrollment" }', 100);`,
-//}
+func getReservation(ctx context.Context, t *testing.T, db postgres.Database, walletID int64) int64 {
+	t.Helper()
+
+	var reservation int64
+
+	query := `select reservation from wallets where id = $1;`
+
+	err := db.QueryRowContext(ctx, query, walletID).Scan(&reservation)
+	require.NoError(t, err)
+
+	return reservation
+}

@@ -1,3 +1,4 @@
+//go:generate mockgen --source=service.go --destination=mock/service.go
 package get_report
 
 import (
@@ -14,6 +15,7 @@ import (
 
 	"github.com/frutonanny/wallet-service/internal/postgres"
 	repoReport "github.com/frutonanny/wallet-service/internal/repositories/report"
+	"github.com/frutonanny/wallet-service/pkg"
 )
 
 const (
@@ -29,6 +31,16 @@ type Repository interface {
 	GetReport(ctx context.Context, period string) ([]repoReport.Service, error)
 }
 
+type MinioClient interface {
+	PutObject(
+		ctx context.Context,
+		bucketName, objectName string,
+		reader io.Reader,
+		objectSize int64,
+		opts minio.PutObjectOptions,
+	) (info minio.UploadInfo, err error)
+}
+
 // dependencies умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
 // Нужен для написания юнит-тестов без подключения к базе.
 type dependencies interface {
@@ -38,12 +50,12 @@ type dependencies interface {
 type Service struct {
 	logger         logger
 	db             *sql.DB
-	minioClient    *minio.Client
+	minioClient    MinioClient
 	publicEndpoint string
 	deps           dependencies
 }
 
-func New(logger logger, db *sql.DB, minioClient *minio.Client, publicEndpoint string) *Service {
+func New(logger logger, db *sql.DB, minioClient MinioClient, publicEndpoint string) *Service {
 	return &Service{
 		logger:         logger,
 		db:             db,
@@ -54,15 +66,20 @@ func New(logger logger, db *sql.DB, minioClient *minio.Client, publicEndpoint st
 	}
 }
 
-// GetReport отдает ссылку на CSV файл, который лежит в хранилище minio. Файл содержит отчет за период period
+func (s *Service) WithDependencies(deps dependencies) *Service {
+	s.deps = deps
+	return s
+}
+
+// GetReport отдает ссылку на CSV-файл, который лежит в хранилище minio. Файл содержит отчет за период period
 // по всем услугам.
 //
-// 1/ Получаем отчет из базы данных. В виде списка услуг за отчетный период period.
+// - Получаем отчет из базы данных. В виде списка услуг за отчетный период period.
 // - Преобразовываем полученный список в csv-файл в памяти.
 // - Кладем преобразованный файл в minio-бакет отчетов.
 // - Собираем ссылку на csv-файл.
 func (s *Service) GetReport(ctx context.Context, period string) (string, error) {
-	reportRepo := repoReport.New(s.db)
+	reportRepo := s.deps.NewRepository(s.db)
 
 	// Получаем отчет из базы данных. В виде списка услуг за отчетный период period.
 	report, err := reportRepo.GetReport(ctx, period)
@@ -113,4 +130,11 @@ func writeToCsv(wr io.Writer, report []repoReport.Service) error {
 	}
 
 	return nil
+}
+
+func getServiceName(serviceID int64) string {
+	if name, ok := pkg.Services[serviceID]; ok {
+		return name
+	}
+	return fmt.Sprintf("Неизвестная услуга: %d", serviceID)
 }

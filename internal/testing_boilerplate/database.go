@@ -34,7 +34,7 @@ func connectDB(dsn string) (*sql.DB, func()) {
 	return db, cancel
 }
 
-//factory - в транзакции выполеняет переданные sql-запросы, а также проверяет безошибочное их выполнение.
+// factory - в транзакции выполняет переданные sql-запросы, а также проверяет безошибочное их выполнение.
 func factory(t *testing.T, db *sql.DB, queries ...[]string) *sql.Tx {
 	ctx := context.Background()
 

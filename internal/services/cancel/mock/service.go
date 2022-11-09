@@ -137,11 +137,12 @@ func (m *MockOrderRepository) EXPECT() *MockOrderRepositoryMockRecorder {
 }
 
 // AddOrderTransactions mocks base method.
-func (m *MockOrderRepository) AddOrderTransactions(ctx context.Context, orderID int64, nameType string) error {
+func (m *MockOrderRepository) AddOrderTransactions(ctx context.Context, orderID int64, nameType string) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddOrderTransactions", ctx, orderID, nameType)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AddOrderTransactions indicates an expected call of AddOrderTransactions.
@@ -205,11 +206,12 @@ func (m *MockTransactionRepository) EXPECT() *MockTransactionRepositoryMockRecor
 }
 
 // AddTransaction mocks base method.
-func (m *MockTransactionRepository) AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error {
+func (m *MockTransactionRepository) AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddTransaction", ctx, walletID, action, payload, amount)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AddTransaction indicates an expected call of AddTransaction.

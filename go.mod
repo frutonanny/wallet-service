@@ -7,12 +7,14 @@ require (
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/getkin/kin-openapi v0.106.0
 	github.com/golang/mock v1.6.0
+	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/minio/minio-go/v7 v7.0.43
 	github.com/pressly/goose/v3 v3.7.0
 	github.com/stretchr/testify v1.8.0
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
 
 require (
@@ -21,7 +23,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/invopop/yaml v0.1.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect

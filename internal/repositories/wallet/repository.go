@@ -84,12 +84,12 @@ func (r *Repository) CreateWallet(ctx context.Context, userID int64) (int64, err
 }
 
 // Add - зачисляет переданную сумму на кошелек пользователя и возвращает текущий баланс.
-func (r *Repository) Add(ctx context.Context, walletID int64, cash int64) (int64, error) {
+func (r *Repository) Add(ctx context.Context, walletID int64, amount int64) (int64, error) {
 	var balance int64
 
 	query := `update wallets set balance = balance + $1 where id= $2 returning balance;`
 
-	err := r.db.QueryRowContext(ctx, query, cash, walletID).Scan(&balance)
+	err := r.db.QueryRowContext(ctx, query, amount, walletID).Scan(&balance)
 	if err != nil {
 		return 0, fmt.Errorf("query row: %v", err)
 	}

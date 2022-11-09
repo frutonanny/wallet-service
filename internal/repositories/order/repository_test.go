@@ -62,7 +62,7 @@ func TestRepository_CreateOrder(t *testing.T) {
 
 		repo := repoOrder.New(tx)
 
-		// Создаем заказ.
+		// Получаем ошибку, так как кошелька не существует.
 		_, err := repo.CreateOrder(ctx, testFailed, testExternalID, testServiceID, testAmount, testStatusR)
 		assert.Error(t, err)
 	})
@@ -123,9 +123,9 @@ func TestRepository_GetOrder(t *testing.T) {
 		// Получаем информацию о ранее созданном заказе.
 		orderID2, status, amount, err := repo.GetOrder(ctx, testExternalID)
 		require.NoError(t, err)
-		assert.Equal(t, orderID, orderID2)
-		assert.Equal(t, testStatusR, status)
-		assert.Equal(t, testAmount, amount)
+		assert.EqualValues(t, orderID, orderID2)
+		assert.EqualValues(t, testStatusR, status)
+		assert.EqualValues(t, testAmount, amount)
 	})
 
 	t.Run("get order failed, unknown walletID", func(t *testing.T) {
@@ -163,9 +163,9 @@ func TestRepository_UpdateOrder(t *testing.T) {
 		// Получаем информацию о ранее созданном заказе.
 		orderID2, status, amount, err := repo.GetOrder(ctx, testExternalID)
 		require.NoError(t, err)
-		assert.Equal(t, orderID, orderID2)
-		assert.Equal(t, testStatusW, status)
-		assert.Equal(t, testAmount/2, amount)
+		assert.EqualValues(t, orderID, orderID2)
+		assert.EqualValues(t, testStatusW, status)
+		assert.EqualValues(t, testAmount/2, amount)
 	})
 
 	t.Run("update order failed, unknown walletID", func(t *testing.T) {
@@ -203,8 +203,8 @@ func TestRepository_UpdateOrderStatus(t *testing.T) {
 		// Получаем информацию о ранее созданном заказе.
 		orderID2, status, _, err := repo.GetOrder(ctx, testExternalID)
 		require.NoError(t, err)
-		assert.Equal(t, orderID, orderID2)
-		assert.Equal(t, testStatusW, status)
+		assert.EqualValues(t, orderID, orderID2)
+		assert.EqualValues(t, testStatusW, status)
 	})
 
 	t.Run("update order status failed, unknown walletID", func(t *testing.T) {
@@ -239,10 +239,10 @@ func TestRepository_AddOrderTransactions(t *testing.T) {
 		txID, err := repo.AddOrderTransactions(ctx, orderID, testTypeTx)
 		require.NoError(t, err)
 
-		orderTx := getOrderTx(ctx, t, tx, txID)
-		assert.EqualValues(t, txID, orderTx.ID)
-		assert.EqualValues(t, orderID, orderTx.OrderID)
-		assert.EqualValues(t, testTypeTx, orderTx.Type)
+		txOrder := getOrderTx(ctx, t, tx, txID)
+		assert.EqualValues(t, txID, txOrder.ID)
+		assert.EqualValues(t, orderID, txOrder.OrderID)
+		assert.EqualValues(t, testTypeTx, txOrder.Type)
 	})
 
 	t.Run("add order transactions failed, unknown walletID", func(t *testing.T) {
@@ -251,7 +251,7 @@ func TestRepository_AddOrderTransactions(t *testing.T) {
 
 		repo := repoOrder.New(tx)
 
-		// Добавляем информацию о транзакции c несуществующим заказом.
+		// Добавляем информацию о транзакции с несуществующим заказом.
 		err := repo.UpdateOrderStatus(ctx, testFailed, testTypeTx)
 		assert.Error(t, err)
 	})
@@ -277,6 +277,7 @@ type orderTx struct {
 	Type    string
 }
 
+// getOrderTx отдает информацию о транзакции.
 func getOrderTx(ctx context.Context, t *testing.T, db postgres.Database, txID int64) orderTx {
 	t.Helper()
 

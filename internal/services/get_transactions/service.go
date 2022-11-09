@@ -1,3 +1,4 @@
+//go:generate mockgen --source=service.go --destination=mock/service.go
 package get_transactions
 
 import (
@@ -17,11 +18,11 @@ type logger interface {
 	Error(msg string)
 }
 
-type walletRepository interface {
+type WalletRepository interface {
 	ExistWallet(ctx context.Context, userID int64) (int64, error)
 }
 
-type transactionRepository interface {
+type TransactionRepository interface {
 	GetTransactions(
 		ctx context.Context,
 		walletID, limit, offset int64,
@@ -33,8 +34,8 @@ type transactionRepository interface {
 // dependencies умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
 // Нужен для написания юнит-тестов без подключения к базе.
 type dependencies interface {
-	NewWalletRepository(db postgres.Database) walletRepository
-	NewTransactionRepository(db postgres.Database) transactionRepository
+	NewWalletRepository(db postgres.Database) WalletRepository
+	NewTransactionRepository(db postgres.Database) TransactionRepository
 }
 
 type Service struct {

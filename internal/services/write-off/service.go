@@ -1,3 +1,4 @@
+//go:generate mockgen --source=service.go --destination=mock/service.go
 package write_off
 
 import (
@@ -30,7 +31,7 @@ type OrderRepository interface {
 }
 
 type TransactionRepository interface {
-	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error
+	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) (int64, error)
 }
 
 type ReportRepository interface {
@@ -162,7 +163,7 @@ func (s *Service) WriteOff(ctx context.Context, userID, serviceID, externalID, p
 	txsRepo := s.deps.NewTransactionRepository(tx)
 
 	// Добавляем транзакцию о зарезервированных средствах.
-	if err := txsRepo.AddTransaction(ctx, walletID, transactions.TypeWriteOff, payload, price); err != nil {
+	if _, err := txsRepo.AddTransaction(ctx, walletID, transactions.TypeWriteOff, payload, price); err != nil {
 		s.logger.Error(fmt.Sprintf("add transaction: %s", err))
 		return 0, fmt.Errorf("add transaction: %v", err)
 	}

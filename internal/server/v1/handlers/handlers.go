@@ -12,7 +12,7 @@ type getBalanceService interface {
 	GetBalance(ctx context.Context, userID int64) (int64, error)
 }
 type addService interface {
-	Add(ctx context.Context, walletID int64, cash int64) (int64, error)
+	Add(ctx context.Context, userID, amount int64) (int64, error)
 }
 
 type reserveService interface {

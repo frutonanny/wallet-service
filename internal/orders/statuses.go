@@ -1,8 +1,8 @@
 package orders
 
 const (
-	StatusReserved   = "reserved"    // Деньги зарезервированы для оплаты заказа.
-	StatusWrittenOff = "written_off" // Заказ оплачен.
+	StatusReserved   = "reserved"    // Деньги зарезервированы по заказу.
+	StatusWrittenOff = "written_off" // Деньги по заказу списаны.
 	StatusCancelled  = "cancelled"   // Заказ отменен.
 )
 

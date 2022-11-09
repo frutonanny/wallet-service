@@ -31,7 +31,7 @@ type OrderRepository interface {
 }
 
 type TransactionRepository interface {
-	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error
+	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) (int64, error)
 }
 
 // dependencies умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
@@ -61,12 +61,12 @@ func (s *Service) WithDependencies(deps dependencies) *Service {
 	return s
 }
 
-// Cancel - разрезервирует переданную сумму средст у пользователя.
+// Cancel - разрезервирует переданную сумму средств у пользователя.
 // - проверяем есть ли кошелек у пользователя, если нет, то отдаем ошибку ErrWalletNotFound.
 // - проверяем есть ли заказ с переданным идентификатором внешнего заказа.
 // 		1. Если заказа нет, то возвращаем ошибку ErrOrderNotFound.
 // 		2. Заказ есть, то проверяем статус заказа. Должен быть reservation. Узнаем сумма резервирования.
-// - списываем зарезервированню сумму с резерва пользователя. Добавляем эту сумму в баланс пользователя
+// - списываем зарезервированную сумму с резерва пользователя. Добавляем эту сумму в баланс пользователя
 // - обновляем информацию о заказе.
 // - добавляем транзакцию об обновленном заказе;
 // - добавляем транзакцию об отмене резервирования средств;
@@ -150,7 +150,7 @@ func (s *Service) Cancel(ctx context.Context, userID, externalID int64) (int64, 
 	txsRepo := s.deps.NewTransactionRepository(tx)
 
 	// Добавляем транзакцию о разрезервированных средствах
-	if err := txsRepo.AddTransaction(ctx, walletID, transactions.TypeCancel, payload, amount); err != nil {
+	if _, err := txsRepo.AddTransaction(ctx, walletID, transactions.TypeCancel, payload, amount); err != nil {
 		s.logger.Error(fmt.Sprintf("add transaction: %s", err))
 		return 0, fmt.Errorf("add transaction: %v", err)
 	}

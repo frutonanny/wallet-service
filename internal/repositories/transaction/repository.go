@@ -18,16 +18,24 @@ func New(db postgres.Database) *Repository {
 	}
 }
 
-// AddTransaction - добавляет информацию о проведеннной денежной операции.
-func (r *Repository) AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error {
-	query := `insert into transactions(wallet_id, "type", payload, amount) values($1, $2, $3, $4);`
+// AddTransaction - добавляет информацию о проведенной денежной операции.
+func (r *Repository) AddTransaction(
+	ctx context.Context,
+	walletID int64,
+	action string,
+	payload []byte,
+	amount int64,
+) (int64, error) {
+	var id int64
 
-	_, err := r.db.ExecContext(ctx, query, walletID, action, payload, amount)
+	query := `insert into transactions(wallet_id, "type", payload, amount) values($1, $2, $3, $4) returning id;`
+
+	err := r.db.QueryRowContext(ctx, query, walletID, action, payload, amount).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("exec query: %v", err)
+		return 0, fmt.Errorf("exec query: %v", err)
 	}
 
-	return nil
+	return id, nil
 }
 
 // GetTransactions отдает список транзакций пользователя, отсортированный по переданному параметру.
@@ -103,11 +111,7 @@ func (r *Repository) GetTransactionsByTime(
 	for rows.Next() {
 		tx := Transaction{}
 
-		err = rows.Scan(
-			&tx.Type, &tx.Payload, &tx.Amount, &tx.CreatedAt,
-		)
-
-		if err != nil {
+		if err := rows.Scan(&tx.Type, &tx.Payload, &tx.Amount, &tx.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan: %w", err)
 		}
 

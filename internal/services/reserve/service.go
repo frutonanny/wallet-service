@@ -30,7 +30,7 @@ type OrderRepository interface {
 }
 
 type TransactionRepository interface {
-	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) error
+	AddTransaction(ctx context.Context, walletID int64, action string, payload []byte, amount int64) (int64, error)
 }
 
 // dependencies умеет налету создавать репозиторий поверх *sql.DB, *sql.Tx.
@@ -136,7 +136,7 @@ func (s *Service) Reserve(ctx context.Context, userID, serviceID, externalID, pr
 	txsRepo := s.deps.NewTransactionRepository(tx)
 
 	// Добавляем транзакцию о зарезервированных средствах
-	if err := txsRepo.AddTransaction(ctx, walletID, transactions.TypeReserve, payload, price); err != nil {
+	if _, err := txsRepo.AddTransaction(ctx, walletID, transactions.TypeReserve, payload, price); err != nil {
 		s.logger.Error(fmt.Sprintf("add transaction: %s", err))
 		return 0, fmt.Errorf("add transaction: %v", err)
 	}

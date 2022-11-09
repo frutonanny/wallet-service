@@ -52,7 +52,7 @@ type AddResponse struct {
 
 // CancelData defines model for CancelData.
 type CancelData struct {
-	// Текущий баланс пользователя в копейках с учетом разрезервирования средств.
+	// Текущий баланс пользователя в копейках с учетом разрезервированных средств.
 	Balance int64 `json:"balance"`
 }
 
@@ -121,10 +121,10 @@ type GetTransactionsByTimeData struct {
 
 // GetTransactionsByTimeRequest defines model for GetTransactionsByTimeRequest.
 type GetTransactionsByTimeRequest struct {
-	// Временная точка в формате time.RFC3339, до которой происходит поиск транзакций.
+	// Временная точка в формате RFC3339, до которой происходит поиск транзакций.
 	End time.Time `json:"end"`
 
-	// Временная точка в формате time.RFC3339, от которой начинается поиск транзакций.
+	// Временная точка в формате RFC3339, от которой начинается поиск транзакций.
 	Start time.Time `json:"start"`
 
 	// Идентификатор пользователя.
@@ -145,26 +145,26 @@ type GetTransactionsData struct {
 
 // GetTransactionsRequest defines model for GetTransactionsRequest.
 type GetTransactionsRequest struct {
-	// Направление поиска (по возрастанию/убыванию).
+	// Направление сортировки (по возрастанию / убыванию).
 	Direction GetTransactionsRequestDirection `json:"direction"`
 
 	// Количество записей.
 	Limit int64 `json:"limit"`
 
-	// Смещение по отсортированным записям.
+	// Смещение по записям.
 	Offset int64 `json:"offset"`
 
-	// Поле, по которому происходит сортировка (дате/сумме).
+	// Поле, по которому происходит сортировка (по дате / по сумме).
 	SortBy GetTransactionsRequestSortBy `json:"sortBy"`
 
 	// Идентификатор пользователя.
 	UserID int64 `json:"userID"`
 }
 
-// Направление поиска (по возрастанию/убыванию).
+// Направление сортировки (по возрастанию / убыванию).
 type GetTransactionsRequestDirection string
 
-// Поле, по которому происходит сортировка (дате/сумме).
+// Поле, по которому происходит сортировка (по дате / по сумме).
 type GetTransactionsRequestSortBy string
 
 // GetTransactionsResponse defines model for GetTransactionsResponse.
@@ -175,7 +175,7 @@ type GetTransactionsResponse struct {
 
 // ReserveData defines model for ReserveData.
 type ReserveData struct {
-	// Текущий баланс пользователя в копейках с учетом резервирования средств.
+	// Текущий баланс пользователя в копейках за вычетом зарезервированных средств.
 	Balance int64 `json:"balance"`
 }
 
@@ -208,13 +208,13 @@ type Transaction struct {
 	// Время, когда была совершена операция.
 	CreatedAt time.Time `json:"createdAt"`
 
-	// Описывает вид денежной операции.
+	// Описание денежной операции.
 	Description string `json:"description"`
 }
 
 // WriteOffData defines model for WriteOffData.
 type WriteOffData struct {
-	// Текущий баланс пользователя в копейках с учетом списания средств.
+	// Текущий баланс пользователя в копейках за вычетом списанных средств.
 	Balance int64 `json:"balance"`
 }
 
@@ -434,39 +434,39 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"AA==",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

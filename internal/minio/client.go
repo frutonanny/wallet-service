@@ -12,10 +12,13 @@ func Must(
 	accessKeyID string,
 	secretAccessKey string,
 ) *minio.Client {
-	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
-		Secure: false,
-	})
+	client, err := minio.New(
+		endpoint,
+		&minio.Options{
+			Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+			Secure: false,
+		},
+	)
 
 	if err != nil {
 		panic(fmt.Errorf("new minio client: %v", err))

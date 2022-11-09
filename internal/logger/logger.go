@@ -9,8 +9,10 @@ type Logger struct {
 	*log.Logger
 }
 
-func Must() *Logger {
-	return &Logger{Logger: log.New(os.Stdout, "", log.LstdFlags)}
+func New() *Logger {
+	return &Logger{
+		Logger: log.New(os.Stdout, "", log.LstdFlags),
+	}
 }
 
 // Info - пишет в лог успешно выполненные операции
