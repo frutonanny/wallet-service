@@ -10,7 +10,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	serviceConfig "github.com/frutonanny/wallet-service/internal/config"
+	conf "github.com/frutonanny/wallet-service/internal/config"
 	serverGen "github.com/frutonanny/wallet-service/internal/generated/server/v1"
 	logger2 "github.com/frutonanny/wallet-service/internal/logger"
 	"github.com/frutonanny/wallet-service/internal/minio"
@@ -48,12 +48,12 @@ func run() error {
 
 	flag.Parse()
 
-	f := flag.Lookup(serviceConfig.Arg)
+	f := flag.Lookup(conf.Arg)
 	if f == nil {
 		return errors.New("config arg must be set")
 	}
 
-	config := serviceConfig.Must(f.Value.String())
+	config := conf.Must(f.Value.String())
 
 	logger := logger2.New()
 

@@ -44,7 +44,7 @@ func New(
 }
 
 func (s *Server) Run(ctx context.Context) error {
-	eg := &errgroup.Group{}
+	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
 		<-ctx.Done()
